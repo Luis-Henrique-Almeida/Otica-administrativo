@@ -1,98 +1,160 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { supabase } from "../supabase";
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
+export default function Login() {
+  const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [carregando, setCarregando] = useState(false);
+
+  async function fazerLogin() {
+    if (!email.trim() || !senha) {
+      Alert.alert("Atenção", "Preencha o e-mail e a senha.");
+      return;
+    }
+
+    try {
+      setCarregando(true);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: senha,
+      });
+
+      if (error) {
+        Alert.alert("Erro ao entrar", error.message);
+        return;
+      }
+
+      const { data: perfil, error: erroPerfil } = await supabase
+        .from("usuarios")
+        .select("id, nome, role, otica_id, ativo")
+        .eq("id", data.user.id)
+        .single();
+
+      if (erroPerfil || !perfil) {
+        Alert.alert(
+          "Erro no perfil",
+          "Login realizado, mas não foi possível encontrar seu perfil na tabela usuarios.",
+        );
+        return;
+      }
+
+      if (!perfil.ativo) {
+        await supabase.auth.signOut();
+        Alert.alert("Acesso bloqueado", "Este usuário está inativo.");
+        return;
+      }
+
+      router.replace("/dashboard");
+    } catch (erro) {
+      Alert.alert("Erro", String(erro));
+    } finally {
+      setCarregando(false);
+    }
   }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+    <View style={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.title}>ÓTICA</Text>
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+        <Text style={styles.subtitle}>Painel Administrativo</Text>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+        <TextInput
+          style={styles.input}
+          placeholder="Digite seu e-mail"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={email}
+          onChangeText={setEmail}
+        />
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+        <TextInput
+          style={styles.input}
+          placeholder="Digite sua senha"
+          secureTextEntry
+          value={senha}
+          onChangeText={setSenha}
+        />
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={fazerLogin}
+          disabled={carregando}
+        >
+          <Text style={styles.buttonText}>
+            {carregando ? "ENTRANDO..." : "ENTRAR"}
+          </Text>
+        </TouchableOpacity>
+
+        <Text style={styles.footer}>Sistema de gestão para óticas</Text>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    backgroundColor: "#f2f2f2",
+    justifyContent: "center",
+    padding: 20,
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+
+  card: {
+    backgroundColor: "#ffffff",
+    padding: 25,
+    borderRadius: 15,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
+
   title: {
-    textAlign: 'center',
+    fontSize: 32,
+    fontWeight: "bold",
+    textAlign: "center",
   },
-  code: {
-    textTransform: 'uppercase',
+
+  subtitle: {
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 25,
+    color: "#666",
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+
+  input: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    padding: 14,
+    marginBottom: 15,
+  },
+
+  button: {
+    backgroundColor: "#111",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+
+  footer: {
+    textAlign: "center",
+    marginTop: 20,
+    color: "#888",
   },
 });
