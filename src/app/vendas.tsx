@@ -1,14 +1,14 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { supabase } from "../supabase";
 
@@ -108,7 +108,7 @@ export default function Vendas() {
     0,
   );
 
-  function revisarVenda() {
+  async function revisarVenda() {
     if (itensSelecionados.length === 0) {
       Alert.alert("Atenção", "Selecione pelo menos um produto.");
       return;
@@ -126,10 +126,40 @@ export default function Vendas() {
       return;
     }
 
-    Alert.alert(
-      "Venda conferida",
-      `Itens: ${itensSelecionados.length}\nTotal: ${formatarPreco(total)}\nPagamento: ${formaPagamento}\n\nA gravação da venda será implementada na próxima etapa.`,
-    );
+    try {
+      const itens = itensSelecionados.map((item) => ({
+        produto_id: item.produto.id,
+        quantidade: item.quantidade,
+      }));
+
+      const { data, error } = await supabase.rpc("registrar_venda", {
+        p_itens: itens,
+        p_forma_pagamento: formaPagamento,
+      });
+
+      if (error) throw error;
+
+      Alert.alert(
+        "Venda registrada!",
+        `Venda registrada com sucesso.\nTotal: ${formatarPreco(total)}`,
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              setQuantidades({});
+              carregarProdutos();
+            },
+          },
+        ],
+      );
+    } catch (error) {
+      Alert.alert(
+        "Erro ao registrar venda",
+        error instanceof Error
+          ? error.message
+          : "Não foi possível registrar a venda.",
+      );
+    }
   }
 
   if (carregando) {
@@ -155,7 +185,7 @@ export default function Vendas() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.lista}
         ListEmptyComponent={
-          <Text style={styles.vazio}>Nenhum produto ativo encontrado.</Text>
+          <Text style={styles.vazio}>Nenhum produto encontrado.</Text>
         }
         renderItem={({ item }) => (
           <View style={styles.card}>

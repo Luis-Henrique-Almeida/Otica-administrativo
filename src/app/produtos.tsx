@@ -6,6 +6,7 @@ import {
   FlatList,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -24,6 +25,7 @@ export default function Produtos() {
   const router = useRouter();
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [busca, setBusca] = useState("");
 
   async function alterarStatusProduto(item: Produto) {
     const { data: authData, error: authError } = await supabase.auth.getUser();
@@ -117,7 +119,7 @@ export default function Produtos() {
         .order("nome");
 
       if (error) {
-        Alert.alert("Erro ao carregar produtos", error.message);
+        Alert.alert("Erro ao carregar produto", error.message);
         return;
       }
 
@@ -241,11 +243,23 @@ export default function Produtos() {
         </TouchableOpacity>
       </View>
 
+      <TextInput
+        style={styles.campoBusca}
+        placeholder="Buscar produto pelo nome:"
+        placeholderTextColor="#9CA3AF"
+        value={busca}
+        onChangeText={setBusca}
+        autoCapitalize="none"
+        clearButtonMode="while-editing"
+      />
+
       {carregando ? (
         <ActivityIndicator size="large" color="#111827" />
       ) : (
         <FlatList
-          data={produtos}
+          data={produtos.filter((produto) =>
+            produto.nome.toLowerCase().includes(busca.trim().toLowerCase()),
+          )}
           keyExtractor={(item) => item.id}
           renderItem={renderizarProduto}
           contentContainerStyle={styles.lista}
@@ -381,5 +395,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 20,
     marginTop: 8,
+  },
+
+  campoBusca: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: "#111827",
+    marginBottom: 14,
   },
 });

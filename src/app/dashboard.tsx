@@ -20,6 +20,11 @@ export default function Dashboard() {
   const [produtosEsgotados, setProdutosEsgotados] = useState(0);
   const [totalVendas, setTotalVendas] = useState(0);
   const [faturamento, setFaturamento] = useState(0);
+
+  const [vendasHoje, setVendasHoje] = useState(0);
+  const [faturamentoHoje, setFaturamentoHoje] = useState(0);
+  const [faturamentoMes, setFaturamentoMes] = useState(0);
+  const [ticketMedio, setTicketMedio] = useState(0);
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
@@ -73,17 +78,61 @@ export default function Dashboard() {
 
       const { data: vendas, error: vendasErro } = await supabase
         .from("vendas")
-        .select("valor_total")
+        .select("valor_total, data_venda, created_at")
         .eq("otica_id", perfil.otica_id);
 
       if (vendasErro) throw vendasErro;
 
-      setTotalVendas(vendas?.length ?? 0);
-      setFaturamento(
-        vendas?.reduce(
-          (total, venda) => total + Number(venda.valor_total),
-          0,
-        ) ?? 0,
+      const listaVendas = vendas ?? [];
+
+      const agora = new Date();
+
+      const inicioHoje = new Date(
+        agora.getFullYear(),
+        agora.getMonth(),
+        agora.getDate(),
+      );
+
+      const inicioAmanha = new Date(
+        agora.getFullYear(),
+        agora.getMonth(),
+        agora.getDate() + 1,
+      );
+
+      const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+
+      const vendasDoDia = listaVendas.filter((venda) => {
+        const data = new Date(venda.data_venda || venda.created_at);
+        return data >= inicioHoje && data < inicioAmanha;
+      });
+
+      const vendasDoMes = listaVendas.filter((venda) => {
+        const data = new Date(venda.data_venda || venda.created_at);
+        return data >= inicioMes && data < inicioAmanha;
+      });
+
+      const totalFaturamento = listaVendas.reduce(
+        (soma, venda) => soma + Number(venda.valor_total),
+        0,
+      );
+
+      const totalHoje = vendasDoDia.reduce(
+        (soma, venda) => soma + Number(venda.valor_total),
+        0,
+      );
+
+      const totalMes = vendasDoMes.reduce(
+        (soma, venda) => soma + Number(venda.valor_total),
+        0,
+      );
+
+      setTotalVendas(listaVendas.length);
+      setFaturamento(totalFaturamento);
+      setVendasHoje(vendasDoDia.length);
+      setFaturamentoHoje(totalHoje);
+      setFaturamentoMes(totalMes);
+      setTicketMedio(
+        listaVendas.length > 0 ? totalFaturamento / listaVendas.length : 0,
       );
     } catch (erro) {
       console.error("Erro ao carregar dashboard:", erro);
@@ -117,8 +166,10 @@ export default function Dashboard() {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.brand}>ÓTICA</Text>
-          <Text style={styles.subtitle}>Painel administrativo</Text>
+          <Text style={styles.brand}>Vision</Text>
+          <Text style={styles.subtitle}>
+            Painel administrativo da usa ótica!
+          </Text>
         </View>
 
         <TouchableOpacity onPress={sair} style={styles.logout}>
@@ -138,53 +189,30 @@ export default function Dashboard() {
         <View style={styles.card}>
           <Text style={styles.cardLabel}>Estoque baixo</Text>
           <Text style={styles.cardValue}>{estoqueBaixo}</Text>
-          <Text style={styles.cardHint}>5 unidades ou menos</Text>
+          <Text style={styles.cardHint}>No limite definido</Text>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.cardLabel}>Vendas registradas</Text>
-          <Text style={styles.cardValue}>{totalVendas}</Text>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Faturamento acumulado</Text>
-          <Text style={styles.cardValue}>
-            {faturamento.toLocaleString("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            })}
-          </Text>
+          <Text style={styles.cardLabel}>Produtos esgotados</Text>
+          <Text style={styles.cardValue}>{produtosEsgotados}</Text>
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>Gestão da ótica</Text>
-
       <TouchableOpacity
-        style={styles.menuCard}
+        style={[styles.menuCard, { marginTop: 12 }]}
         onPress={() => router.push("/produtos")}
         activeOpacity={0.7}
       >
         <Text style={styles.menuTitle}>Produtos e estoque</Text>
         <Text style={styles.menuDescription}>
-          Consulte os produtos cadastrados e suas quantidades.
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.menuCard}
-        onPress={() => router.push("/vendas")}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.menuTitle}>Registrar venda</Text>
-        <Text style={styles.menuDescription}>
-          Registre vendas, selecione produtos e confira o valor total.
+          Consulte os produtos cadastrados, quantidades e níveis de estoque.
         </Text>
       </TouchableOpacity>
 
       <View style={styles.menuCard}>
-        <Text style={styles.menuTitle}>Vendas e relatórios</Text>
+        <Text style={styles.menuTitle}>Vendas</Text>
         <Text style={styles.menuDescription}>
-          Acompanhe as vendas registradas e o faturamento.
+          Registre vendas e atualize o estoque automaticamente.
         </Text>
 
         <TouchableOpacity
@@ -195,12 +223,16 @@ export default function Dashboard() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.menuCard}>
-        <Text style={styles.menuTitle}>Promoções</Text>
+      <TouchableOpacity
+        style={styles.menuCard}
+        onPress={() => router.push("/historico-vendas")}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.menuTitle}>Histórico de vendas</Text>
         <Text style={styles.menuDescription}>
-          Organize os descontos oferecidos pela sua ótica.
+          Consulte as vendas realizadas e o faturamento acumulado.
         </Text>
-      </View>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -306,5 +338,19 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     marginTop: 6,
     lineHeight: 20,
+  },
+
+  botao: {
+    backgroundColor: "#2563EB",
+    padding: 16,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 12,
+  },
+
+  textoBotao: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });
