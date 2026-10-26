@@ -1,9 +1,10 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -11,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Svg, { Circle, Line, Polyline, Text as SvgText } from "react-native-svg";
 import { supabase } from "../supabase";
 
 type ProdutoMaisVendido = {
@@ -43,7 +45,9 @@ export default function HistoricoVendas() {
   const [nomesProdutos, setNomesProdutos] = useState<
     { id: string; nome: string }[]
   >([]);
-  const [periodo, setPeriodo] = useState<"hoje" | "7dias" | "mes">("hoje");
+  const [periodo, setPeriodo] = useState<"hoje" | "7dias" | "mes" | "ano">(
+    "hoje",
+  );
   const [produtosMaisVendidos, setProdutosMaisVendidos] = useState<
     ProdutoMaisVendido[]
   >([]);
@@ -56,8 +60,11 @@ export default function HistoricoVendas() {
     } else if (periodo === "7dias") {
       inicio.setDate(inicio.getDate() - 6);
       inicio.setHours(0, 0, 0, 0);
-    } else {
+    } else if (periodo === "mes") {
       inicio.setDate(1);
+      inicio.setHours(0, 0, 0, 0);
+    } else {
+      inicio.setMonth(0, 1);
       inicio.setHours(0, 0, 0, 0);
     }
 
@@ -210,14 +217,16 @@ export default function HistoricoVendas() {
 
   const agora = new Date();
   const inicioPeriodo = new Date(agora);
-
   if (periodo === "hoje") {
     inicioPeriodo.setHours(0, 0, 0, 0);
   } else if (periodo === "7dias") {
     inicioPeriodo.setDate(inicioPeriodo.getDate() - 6);
     inicioPeriodo.setHours(0, 0, 0, 0);
-  } else {
+  } else if (periodo === "mes") {
     inicioPeriodo.setDate(1);
+    inicioPeriodo.setHours(0, 0, 0, 0);
+  } else {
+    inicioPeriodo.setMonth(0, 1);
     inicioPeriodo.setHours(0, 0, 0, 0);
   }
 
@@ -280,6 +289,93 @@ export default function HistoricoVendas() {
 
   const ticketMedio =
     vendasFiltradas.length > 0 ? faturamento / vendasFiltradas.length : 0;
+
+  const dadosGrafico = (() => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    let pontos: { label: string; valor: number }[] = [];
+
+    if (periodo === "hoje") {
+      // Hoje: 24 horas
+      pontos = Array.from({ length: 24 }, (_, i) => ({
+        label: `${String(i).padStart(2, "0")}h`,
+        valor: 0,
+      }));
+    } else if (periodo === "7dias") {
+      // Últimos 7 dias, incluindo hoje
+      pontos = Array.from({ length: 7 }, (_, i) => {
+        const data = new Date(hoje);
+        data.setDate(hoje.getDate() - (6 - i));
+
+        return {
+          label: `${String(data.getDate()).padStart(2, "0")}/${String(
+            data.getMonth() + 1,
+          ).padStart(2, "0")}`,
+          valor: 0,
+        };
+      });
+    } else if (periodo === "mes") {
+      // Este mês: todos os dias do mês atual
+      const ano = hoje.getFullYear();
+      const mes = hoje.getMonth();
+      const quantidadeDias = new Date(ano, mes + 1, 0).getDate();
+
+      pontos = Array.from({ length: quantidadeDias }, (_, i) => ({
+        label: String(i + 1).padStart(2, "0"),
+        valor: 0,
+      }));
+    } else {
+      // Este ano: janeiro a dezembro
+      const meses = [
+        "Jan",
+        "Fev",
+        "Mar",
+        "Abr",
+        "Mai",
+        "Jun",
+        "Jul",
+        "Ago",
+        "Set",
+        "Out",
+        "Nov",
+        "Dez",
+      ];
+
+      pontos = meses.map((mes) => ({
+        label: mes,
+        valor: 0,
+      }));
+    }
+
+    for (const venda of vendasFiltradas) {
+      const data = dataDaVenda(venda);
+      let indice = -1;
+
+      if (periodo === "hoje") {
+        indice = data.getHours();
+      } else if (periodo === "7dias") {
+        const diaVenda = new Date(data);
+        diaVenda.setHours(0, 0, 0, 0);
+
+        const diferenca = Math.round(
+          (diaVenda.getTime() - (hoje.getTime() - 6 * 86400000)) / 86400000,
+        );
+
+        indice = diferenca;
+      } else if (periodo === "mes") {
+        indice = data.getDate() - 1;
+      } else {
+        indice = data.getMonth();
+      }
+
+      if (indice >= 0 && indice < pontos.length) {
+        pontos[indice].valor += Number(venda.valor_total);
+      }
+    }
+
+    return pontos;
+  })();
 
   if (carregando) {
     return (
@@ -355,7 +451,119 @@ export default function HistoricoVendas() {
             Este mês
           </Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.botaoPeriodo,
+            periodo === "ano" && styles.botaoPeriodoAtivo,
+          ]}
+          onPress={() => setPeriodo("ano")}
+        >
+          <Text
+            style={[
+              styles.textoPeriodo,
+              periodo === "ano" && styles.textoPeriodoAtivo,
+            ]}
+          >
+            Este Ano
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
+
+      <View style={styles.graficoCard}>
+        <Text style={styles.tituloRanking}>Faturamento por período</Text>
+        <Text style={styles.subtituloRanking}>
+          Valores de acordo com o filtro selecionado.
+        </Text>
+
+        <View style={styles.grafico}>
+          <Svg width="100%" height={220} viewBox="0 0 320 220">
+            <Line
+              x1="35"
+              y1="20"
+              x2="35"
+              y2="180"
+              stroke="#D1D5DB"
+              strokeWidth="1"
+            />
+
+            <Line
+              x1="35"
+              y1="180"
+              x2="305"
+              y2="180"
+              stroke="#D1D5DB"
+              strokeWidth="1"
+            />
+
+            {dadosGrafico.map((ponto, i) => {
+              const x = 35 + (i * 270) / Math.max(dadosGrafico.length - 1, 1);
+
+              const maximo = Math.max(...dadosGrafico.map((p) => p.valor), 1);
+
+              const y = 180 - (ponto.valor / maximo) * 140;
+
+              // Evita que as datas fiquem amontoadas.
+              const intervalo =
+                periodo === "hoje"
+                  ? 4
+                  : periodo === "7dias"
+                    ? 1
+                    : periodo === "mes"
+                      ? 5
+                      : 1;
+
+              const mostrarData =
+                i % intervalo === 0 || i === dadosGrafico.length - 1;
+
+              return (
+                <React.Fragment key={`${ponto.label}-${i}`}>
+                  <Circle cx={x} cy={y} r="3" fill="#2563EB" />
+
+                  {mostrarData && (
+                    <SvgText
+                      x={x}
+                      y={198}
+                      fontSize={periodo === "mes" ? 8 : 9}
+                      fill="#6B7280"
+                      textAnchor="middle"
+                    >
+                      {ponto.label}
+                    </SvgText>
+                  )}
+                </React.Fragment>
+              );
+            })}
+
+            <Polyline
+              points={dadosGrafico
+                .map((ponto, i) => {
+                  const x =
+                    35 + (i * 270) / Math.max(dadosGrafico.length - 1, 1);
+
+                  const maximo = Math.max(
+                    ...dadosGrafico.map((p) => p.valor),
+                    1,
+                  );
+
+                  const y = 180 - (ponto.valor / maximo) * 140;
+
+                  return `${x},${y}`;
+                })
+                .join(" ")}
+              fill="none"
+              stroke="#2563EB"
+              strokeWidth="2.5"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          </Svg>
+        </View>
+
+        <Text style={styles.valorGrafico}>
+          Total: {formatarPreco(faturamento)}
+        </Text>
+      </View>
 
       <View style={styles.ranking}>
         <Text style={styles.tituloRanking}>Produtos mais vendidos</Text>
@@ -444,7 +652,44 @@ export default function HistoricoVendas() {
               <Text style={styles.valor}>
                 {formatarPreco(Number(item.valor_total))}
               </Text>
-              <Text style={styles.pagamento}>{item.forma_pagamento}</Text>
+
+              <View style={styles.acoesVenda}>
+                <Text style={styles.pagamento}>{item.forma_pagamento}</Text>
+
+                <Pressable
+                  onPress={() => {
+                    Alert.alert(
+                      "Opções da venda",
+                      `Venda ${item.id.slice(0, 8)}`,
+                      [
+                        { text: "Cancelar", style: "cancel" },
+                        {
+                          text: "Editar venda",
+                          onPress: () => {
+                            Alert.alert(
+                              "Em desenvolvimento",
+                              "Vamos implementar a edição da venda no próximo passo.",
+                            );
+                          },
+                        },
+                        {
+                          text: "Excluir venda",
+                          style: "destructive",
+                          onPress: () => {
+                            Alert.alert(
+                              "Em desenvolvimento",
+                              "Vamos implementar a exclusão com atualização segura do estoque.",
+                            );
+                          },
+                        },
+                      ],
+                    );
+                  }}
+                  style={styles.botaoOpcoes}
+                >
+                  <Text style={styles.textoOpcoes}>⋮</Text>
+                </Pressable>
+              </View>
             </View>
 
             <Text style={styles.data}>
@@ -505,7 +750,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   observacao: { color: "#64748B", fontSize: 11, marginTop: 8 },
+
   lista: { padding: 16, paddingTop: 12, paddingBottom: 24, flexGrow: 1 },
+
   card: {
     padding: 16,
     marginBottom: 10,
@@ -520,6 +767,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
+
   valor: { fontSize: 18, fontWeight: "700", color: "#0F172A" },
   pagamento: { fontSize: 12, color: "#2563EB" },
   data: { marginTop: 8, fontSize: 13, color: "#475569" },
@@ -642,5 +890,50 @@ const styles = StyleSheet.create({
   },
   textoPeriodoAtivo: {
     color: "#FFFFFF",
+  },
+  graficoCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+
+  grafico: {
+    width: "100%",
+    marginTop: 12,
+    alignItems: "center",
+  },
+
+  valorGrafico: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#2563EB",
+    marginTop: 8,
+    textAlign: "center",
+  },
+  acoesVenda: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  botaoOpcoes: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EFF6FF",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+  },
+
+  textoOpcoes: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#2563EB",
+    lineHeight: 32,
   },
 });

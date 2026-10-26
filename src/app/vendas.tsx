@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -19,6 +20,239 @@ type Produto = {
   estoque: number;
   ativo: boolean;
 };
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+    width: "100%",
+    alignSelf: "center",
+  },
+  centralizado: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F8FAFC",
+  },
+  textoCarregando: {
+    marginTop: 12,
+    color: "#64748B",
+  },
+  cabecalho: {
+    width: "100%",
+    paddingHorizontal: 4,
+    paddingTop: 8,
+    paddingBottom: 16,
+  },
+  titulo: {
+    fontSize: 26,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  subtitulo: {
+    marginTop: 6,
+    fontSize: 14,
+    color: "#64748B",
+  },
+  lista: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+
+  infoProduto: {
+    flex: 1,
+    minWidth: 0,
+    paddingRight: 12,
+  },
+  nomeProduto: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#0F172A",
+  },
+  preco: {
+    marginTop: 5,
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#2563EB",
+  },
+  estoque: {
+    marginTop: 5,
+    fontSize: 12,
+    color: "#64748B",
+  },
+  quantidadeContainer: {
+    width: 100,
+    flexShrink: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  label: {
+    fontSize: 12,
+    color: "#64748B",
+    marginBottom: 6,
+    textAlign: "center",
+  },
+
+  inputQuantidade: {
+    width: "100%",
+    minHeight: 44,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    fontSize: 16,
+    textAlign: "center",
+    color: "#0F172A",
+    backgroundColor: "#FFFFFF",
+  },
+
+  rodape: {
+    flexGrow: 0,
+    flexShrink: 1,
+    maxHeight: "55%",
+    marginTop: 6,
+    backgroundColor: "#F8FAFC",
+  },
+
+  rodapeConteudo: {
+    paddingTop: 6,
+    paddingBottom: 12,
+  },
+
+  labelPagamento: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#0F172A",
+    marginBottom: 10,
+  },
+
+  pagamentos: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 6,
+  },
+
+  opcaoPagamento: {
+    width: "48%",
+    minHeight: 40,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  opcaoSelecionada: {
+    backgroundColor: "#DBEAFE",
+    borderColor: "#2563EB",
+  },
+  textoOpcao: {
+    color: "#334155",
+    fontSize: 13,
+  },
+  textoSelecionado: {
+    color: "#1D4ED8",
+    fontWeight: "600",
+  },
+  resumo: {
+    marginTop: 14,
+    padding: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+
+  textoTotal: {
+    color: "#64748B",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+
+  valorTotal: {
+    marginTop: 6,
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+
+  resumoItens: {
+    marginTop: 6,
+    color: "#64748B",
+    fontSize: 13,
+  },
+  botaoRegistrar: {
+    marginTop: 16,
+    minHeight: 52,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#2563EB",
+    borderRadius: 12,
+  },
+
+  textoBotao: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+
+  botaoVoltar: {
+    marginTop: 8,
+    minHeight: 46,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+    backgroundColor: "#E2E8F0",
+  },
+  textoVoltar: {
+    color: "#475569",
+    fontWeight: "600",
+  },
+  vazio: {
+    textAlign: "center",
+    color: "#64748B",
+    padding: 24,
+  },
+  campoBusca: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    marginTop: 16,
+    marginBottom: 12,
+  },
+});
 
 export default function Vendas() {
   const router = useRouter();
@@ -27,6 +261,7 @@ export default function Vendas() {
   const [quantidades, setQuantidades] = useState<Record<string, string>>({});
   const [formaPagamento, setFormaPagamento] = useState("PIX");
   const [carregando, setCarregando] = useState(true);
+  const [buscaProduto, setBuscaProduto] = useState("");
 
   useEffect(() => {
     carregarProdutos();
@@ -178,12 +413,27 @@ export default function Vendas() {
         <Text style={styles.subtitulo}>
           Selecione os produtos e informe as quantidades.
         </Text>
+
+        <TextInput
+          style={styles.campoBusca}
+          placeholder="Buscar produto pelo nome:"
+          placeholderTextColor="#9CA3AF"
+          value={buscaProduto}
+          onChangeText={setBuscaProduto}
+          autoCapitalize="none"
+        />
       </View>
 
       <FlatList
-        data={produtos}
+        style={{ flex: 1 }}
+        data={produtos.filter((produto) =>
+          produto.nome
+            .toLowerCase()
+            .includes(buscaProduto.trim().toLowerCase()),
+        )}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.lista}
+        nestedScrollEnabled
         ListEmptyComponent={
           <Text style={styles.vazio}>Nenhum produto encontrado.</Text>
         }
@@ -211,227 +461,59 @@ export default function Vendas() {
             </View>
           </View>
         )}
-        ListFooterComponent={
-          <View style={styles.rodape}>
-            <Text style={styles.labelPagamento}>Forma de pagamento</Text>
-
-            <View style={styles.pagamentos}>
-              {["PIX", "Dinheiro", "Cartão de crédito", "Cartão de débito"].map(
-                (forma) => (
-                  <TouchableOpacity
-                    key={forma}
-                    style={[
-                      styles.opcaoPagamento,
-                      formaPagamento === forma && styles.opcaoSelecionada,
-                    ]}
-                    onPress={() => setFormaPagamento(forma)}
-                  >
-                    <Text
-                      style={[
-                        styles.textoOpcao,
-                        formaPagamento === forma && styles.textoSelecionado,
-                      ]}
-                    >
-                      {forma}
-                    </Text>
-                  </TouchableOpacity>
-                ),
-              )}
-            </View>
-
-            <View style={styles.resumo}>
-              <Text style={styles.textoTotal}>Total da venda</Text>
-              <Text style={styles.valorTotal}>{formatarPreco(total)}</Text>
-              <Text style={styles.resumoItens}>
-                {itensSelecionados.length} produto(s) selecionado(s)
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.botaoRegistrar}
-              onPress={revisarVenda}
-            >
-              <Text style={styles.textoBotao}>Conferir venda</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.botaoVoltar}
-              onPress={() => router.back()}
-            >
-              <Text style={styles.textoVoltar}>Voltar</Text>
-            </TouchableOpacity>
-          </View>
-        }
       />
+
+      <ScrollView
+        style={styles.rodape}
+        contentContainerStyle={styles.rodapeConteudo}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.labelPagamento}>Forma de pagamento</Text>
+
+        <View style={styles.pagamentos}>
+          {["PIX", "Dinheiro", "Cartão de crédito", "Cartão de débito"].map(
+            (forma) => (
+              <TouchableOpacity
+                key={forma}
+                style={[
+                  styles.opcaoPagamento,
+                  formaPagamento === forma && styles.opcaoSelecionada,
+                ]}
+                onPress={() => setFormaPagamento(forma)}
+              >
+                <Text
+                  style={[
+                    styles.textoOpcao,
+                    formaPagamento === forma && styles.textoSelecionado,
+                  ]}
+                >
+                  {forma}
+                </Text>
+              </TouchableOpacity>
+            ),
+          )}
+        </View>
+
+        <View style={styles.resumo}>
+          <Text style={styles.textoTotal}>Total da venda</Text>
+          <Text style={styles.valorTotal}>{formatarPreco(total)}</Text>
+          <Text style={styles.resumoItens}>
+            {itensSelecionados.length} produto(s) selecionado(s)
+          </Text>
+        </View>
+
+        <TouchableOpacity style={styles.botaoRegistrar} onPress={revisarVenda}>
+          <Text style={styles.textoBotao}>Registrar venda</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.botaoVoltar}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.textoVoltar}>Voltar</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8FAFC",
-  },
-  centralizado: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F8FAFC",
-  },
-  textoCarregando: {
-    marginTop: 12,
-    color: "#64748B",
-  },
-  cabecalho: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 16,
-    backgroundColor: "#FFFFFF",
-  },
-  titulo: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: "#0F172A",
-  },
-  subtitulo: {
-    marginTop: 6,
-    fontSize: 14,
-    color: "#64748B",
-  },
-  lista: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  card: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#FFFFFF",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  infoProduto: {
-    flex: 1,
-    paddingRight: 10,
-  },
-  nomeProduto: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#0F172A",
-  },
-  preco: {
-    marginTop: 5,
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#2563EB",
-  },
-  estoque: {
-    marginTop: 5,
-    fontSize: 12,
-    color: "#64748B",
-  },
-  quantidadeContainer: {
-    width: 100,
-  },
-  label: {
-    fontSize: 12,
-    color: "#64748B",
-    marginBottom: 6,
-  },
-  inputQuantidade: {
-    borderWidth: 1,
-    borderColor: "#CBD5E1",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    textAlign: "center",
-    color: "#0F172A",
-  },
-  rodape: {
-    marginTop: 8,
-  },
-  labelPagamento: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#0F172A",
-    marginBottom: 10,
-  },
-  pagamentos: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  opcaoPagamento: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#CBD5E1",
-    backgroundColor: "#FFFFFF",
-  },
-  opcaoSelecionada: {
-    backgroundColor: "#DBEAFE",
-    borderColor: "#2563EB",
-  },
-  textoOpcao: {
-    color: "#334155",
-    fontSize: 13,
-  },
-  textoSelecionado: {
-    color: "#1D4ED8",
-    fontWeight: "600",
-  },
-  resumo: {
-    marginTop: 20,
-    padding: 18,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  textoTotal: {
-    color: "#64748B",
-    fontSize: 14,
-  },
-  valorTotal: {
-    marginTop: 6,
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#0F172A",
-  },
-  resumoItens: {
-    marginTop: 6,
-    color: "#64748B",
-    fontSize: 13,
-  },
-  botaoRegistrar: {
-    marginTop: 16,
-    padding: 16,
-    alignItems: "center",
-    backgroundColor: "#2563EB",
-    borderRadius: 10,
-  },
-  textoBotao: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  botaoVoltar: {
-    marginTop: 10,
-    padding: 14,
-    alignItems: "center",
-  },
-  textoVoltar: {
-    color: "#475569",
-    fontWeight: "600",
-  },
-  vazio: {
-    textAlign: "center",
-    color: "#64748B",
-    padding: 24,
-  },
-});
