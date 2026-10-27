@@ -388,248 +388,6 @@ export default function HistoricoVendas() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.cabecalho}>
-        <Text style={styles.titulo}>Histórico de vendas</Text>
-        <Text style={styles.subtitulo}>
-          Consulte as vendas registradas na sua ótica.
-        </Text>
-      </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filtrosPeriodo}
-        contentContainerStyle={styles.conteudoFiltros}
-      >
-        <TouchableOpacity
-          style={[
-            styles.botaoPeriodo,
-            periodo === "hoje" && styles.botaoPeriodoAtivo,
-          ]}
-          onPress={() => setPeriodo("hoje")}
-        >
-          <Text
-            style={[
-              styles.textoPeriodo,
-              periodo === "hoje" && styles.textoPeriodoAtivo,
-            ]}
-          >
-            Hoje
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.botaoPeriodo,
-            periodo === "7dias" && styles.botaoPeriodoAtivo,
-          ]}
-          onPress={() => setPeriodo("7dias")}
-        >
-          <Text
-            style={[
-              styles.textoPeriodo,
-              periodo === "7dias" && styles.textoPeriodoAtivo,
-            ]}
-          >
-            Últimos 7 dias
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.botaoPeriodo,
-            periodo === "mes" && styles.botaoPeriodoAtivo,
-          ]}
-          onPress={() => setPeriodo("mes")}
-        >
-          <Text
-            style={[
-              styles.textoPeriodo,
-              periodo === "mes" && styles.textoPeriodoAtivo,
-            ]}
-          >
-            Este mês
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.botaoPeriodo,
-            periodo === "ano" && styles.botaoPeriodoAtivo,
-          ]}
-          onPress={() => setPeriodo("ano")}
-        >
-          <Text
-            style={[
-              styles.textoPeriodo,
-              periodo === "ano" && styles.textoPeriodoAtivo,
-            ]}
-          >
-            Este Ano
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      <View style={styles.graficoCard}>
-        <Text style={styles.tituloRanking}>Faturamento por período</Text>
-        <Text style={styles.subtituloRanking}>
-          Valores de acordo com o filtro selecionado.
-        </Text>
-
-        <View style={styles.grafico}>
-          <Svg width="100%" height={220} viewBox="0 0 320 220">
-            <Line
-              x1="35"
-              y1="20"
-              x2="35"
-              y2="180"
-              stroke="#D1D5DB"
-              strokeWidth="1"
-            />
-
-            <Line
-              x1="35"
-              y1="180"
-              x2="305"
-              y2="180"
-              stroke="#D1D5DB"
-              strokeWidth="1"
-            />
-
-            {dadosGrafico.map((ponto, i) => {
-              const x = 35 + (i * 270) / Math.max(dadosGrafico.length - 1, 1);
-
-              const maximo = Math.max(...dadosGrafico.map((p) => p.valor), 1);
-
-              const y = 180 - (ponto.valor / maximo) * 140;
-
-              // Evita que as datas fiquem amontoadas.
-              const intervalo =
-                periodo === "hoje"
-                  ? 4
-                  : periodo === "7dias"
-                    ? 1
-                    : periodo === "mes"
-                      ? 5
-                      : 1;
-
-              const mostrarData =
-                i % intervalo === 0 || i === dadosGrafico.length - 1;
-
-              return (
-                <React.Fragment key={`${ponto.label}-${i}`}>
-                  <Circle cx={x} cy={y} r="3" fill="#2563EB" />
-
-                  {mostrarData && (
-                    <SvgText
-                      x={x}
-                      y={198}
-                      fontSize={periodo === "mes" ? 8 : 9}
-                      fill="#6B7280"
-                      textAnchor="middle"
-                    >
-                      {ponto.label}
-                    </SvgText>
-                  )}
-                </React.Fragment>
-              );
-            })}
-
-            <Polyline
-              points={dadosGrafico
-                .map((ponto, i) => {
-                  const x =
-                    35 + (i * 270) / Math.max(dadosGrafico.length - 1, 1);
-
-                  const maximo = Math.max(
-                    ...dadosGrafico.map((p) => p.valor),
-                    1,
-                  );
-
-                  const y = 180 - (ponto.valor / maximo) * 140;
-
-                  return `${x},${y}`;
-                })
-                .join(" ")}
-              fill="none"
-              stroke="#2563EB"
-              strokeWidth="2.5"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            />
-          </Svg>
-        </View>
-
-        <Text style={styles.valorGrafico}>
-          Total: {formatarPreco(faturamento)}
-        </Text>
-      </View>
-
-      <View style={styles.ranking}>
-        <Text style={styles.tituloRanking}>Produtos mais vendidos</Text>
-        <Text style={styles.subtituloRanking}>
-          Ordenados pela quantidade de unidades vendidas.
-        </Text>
-
-        {produtosMaisVendidos.length === 0 ? (
-          <Text style={styles.textoAuxiliar}>
-            Ainda não há produtos vendidos para exibir.
-          </Text>
-        ) : (
-          produtosMaisVendidos.slice(0, 5).map((produto, index) => (
-            <View key={produto.produto_id} style={styles.itemRanking}>
-              <View style={styles.posicaoRanking}>
-                <Text style={styles.textoPosicao}>{index + 1}º</Text>
-              </View>
-
-              <View style={styles.infoRanking}>
-                <Text style={styles.nomeRanking}>{produto.nome}</Text>
-                <Text style={styles.textoAuxiliar}>
-                  {produto.quantidade} unidades vendidas
-                </Text>
-                <Text style={styles.textoAuxiliar}>
-                  Faturamento: {formatarPreco(produto.faturamento)}
-                </Text>
-              </View>
-            </View>
-          ))
-        )}
-      </View>
-
-      <View style={styles.resumo}>
-        <Text style={styles.textoAuxiliar}>Total de vendas registradas</Text>
-        <Text style={styles.numero}>{vendas.length}</Text>
-
-        <View style={styles.indicador}>
-          <Text style={styles.textoAuxiliar}>Vendas de hoje</Text>
-          <Text style={styles.numeroPequeno}>{vendasHoje.length}</Text>
-        </View>
-
-        <View style={styles.indicador}>
-          <Text style={styles.textoAuxiliar}>Faturamento de hoje</Text>
-          <Text style={styles.faturamento}>
-            {formatarPreco(faturamentoHoje)}
-          </Text>
-        </View>
-
-        <View style={styles.indicador}>
-          <Text style={styles.textoAuxiliar}>Faturamento do mês</Text>
-          <Text style={styles.faturamento}>
-            {formatarPreco(faturamentoMes)}
-          </Text>
-        </View>
-
-        <View style={styles.indicador}>
-          <Text style={styles.textoAuxiliar}>Ticket médio</Text>
-          <Text style={styles.faturamento}>{formatarPreco(ticketMedio)}</Text>
-        </View>
-
-        <View style={styles.indicador}>
-          <Text style={styles.textoAuxiliar}>Faturamento acumulado</Text>
-          <Text style={styles.faturamento}>{formatarPreco(faturamento)}</Text>
-        </View>
-      </View>
-
       <FlatList
         data={vendasFiltradas}
         keyExtractor={(item) => item.id}
@@ -642,6 +400,265 @@ export default function HistoricoVendas() {
               carregarVendas();
             }}
           />
+        }
+        ListHeaderComponent={
+          <View>
+            <View style={styles.cabecalho}>
+              <Text style={styles.titulo}>Histórico de vendas</Text>
+              <Text style={styles.subtitulo}>
+                Consulte as vendas registradas na sua ótica.
+              </Text>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.filtrosPeriodo}
+              contentContainerStyle={styles.conteudoFiltros}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.botaoPeriodo,
+                  periodo === "hoje" && styles.botaoPeriodoAtivo,
+                ]}
+                onPress={() => setPeriodo("hoje")}
+              >
+                <Text
+                  style={[
+                    styles.textoPeriodo,
+                    periodo === "hoje" && styles.textoPeriodoAtivo,
+                  ]}
+                >
+                  Hoje
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.botaoPeriodo,
+                  periodo === "7dias" && styles.botaoPeriodoAtivo,
+                ]}
+                onPress={() => setPeriodo("7dias")}
+              >
+                <Text
+                  style={[
+                    styles.textoPeriodo,
+                    periodo === "7dias" && styles.textoPeriodoAtivo,
+                  ]}
+                >
+                  Últimos 7 dias
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.botaoPeriodo,
+                  periodo === "mes" && styles.botaoPeriodoAtivo,
+                ]}
+                onPress={() => setPeriodo("mes")}
+              >
+                <Text
+                  style={[
+                    styles.textoPeriodo,
+                    periodo === "mes" && styles.textoPeriodoAtivo,
+                  ]}
+                >
+                  Este mês
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.botaoPeriodo,
+                  periodo === "ano" && styles.botaoPeriodoAtivo,
+                ]}
+                onPress={() => setPeriodo("ano")}
+              >
+                <Text
+                  style={[
+                    styles.textoPeriodo,
+                    periodo === "ano" && styles.textoPeriodoAtivo,
+                  ]}
+                >
+                  Este Ano
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+            <View style={styles.graficoCard}>
+              <Text style={styles.tituloRanking}>Faturamento por período</Text>
+
+              <Text style={styles.subtituloRanking}>
+                Valores de acordo com o filtro selecionado.
+              </Text>
+
+              <View style={styles.grafico}>
+                <Svg width="100%" height={220} viewBox="0 0 320 220">
+                  <Line
+                    x1="35"
+                    y1="20"
+                    x2="35"
+                    y2="180"
+                    stroke="#D1D5DB"
+                    strokeWidth="1"
+                  />
+
+                  <Line
+                    x1="35"
+                    y1="180"
+                    x2="305"
+                    y2="180"
+                    stroke="#D1D5DB"
+                    strokeWidth="1"
+                  />
+
+                  {dadosGrafico.map((ponto, i) => {
+                    const x =
+                      35 + (i * 270) / Math.max(dadosGrafico.length - 1, 1);
+
+                    const maximo = Math.max(
+                      ...dadosGrafico.map((p) => p.valor),
+                      1,
+                    );
+
+                    const y = 180 - (ponto.valor / maximo) * 140;
+
+                    const intervalo =
+                      periodo === "hoje"
+                        ? 4
+                        : periodo === "7dias"
+                          ? 1
+                          : periodo === "mes"
+                            ? 5
+                            : 1;
+
+                    const mostrarData =
+                      i % intervalo === 0 || i === dadosGrafico.length - 1;
+
+                    return (
+                      <React.Fragment key={`${ponto.label}-${i}`}>
+                        <Circle cx={x} cy={y} r="3" fill="#2563EB" />
+
+                        {mostrarData && (
+                          <SvgText
+                            x={x}
+                            y={198}
+                            fontSize={periodo === "mes" ? 8 : 9}
+                            fill="#6B7280"
+                            textAnchor="middle"
+                          >
+                            {ponto.label}
+                          </SvgText>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+
+                  <Polyline
+                    points={dadosGrafico
+                      .map((ponto, i) => {
+                        const x =
+                          35 + (i * 270) / Math.max(dadosGrafico.length - 1, 1);
+
+                        const maximo = Math.max(
+                          ...dadosGrafico.map((p) => p.valor),
+                          1,
+                        );
+
+                        const y = 180 - (ponto.valor / maximo) * 140;
+
+                        return `${x},${y}`;
+                      })
+                      .join(" ")}
+                    fill="none"
+                    stroke="#2563EB"
+                    strokeWidth="2.5"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
+                </Svg>
+              </View>
+
+              <Text style={styles.valorGrafico}>
+                Total: {formatarPreco(faturamento)}
+              </Text>
+            </View>
+
+            <View style={styles.ranking}>
+              <Text style={styles.tituloRanking}>Produtos mais vendidos</Text>
+
+              <Text style={styles.subtituloRanking}>
+                Ordenados pela quantidade de unidades vendidas.
+              </Text>
+
+              {produtosMaisVendidos.length === 0 ? (
+                <Text style={styles.textoAuxiliar}>
+                  Ainda não há produtos vendidos para exibir.
+                </Text>
+              ) : (
+                produtosMaisVendidos.slice(0, 5).map((produto, index) => (
+                  <View key={produto.produto_id} style={styles.itemRanking}>
+                    <View style={styles.posicaoRanking}>
+                      <Text style={styles.textoPosicao}>{index + 1}º</Text>
+                    </View>
+
+                    <View style={styles.infoRanking}>
+                      <Text style={styles.nomeRanking}>{produto.nome}</Text>
+
+                      <Text style={styles.textoAuxiliar}>
+                        {produto.quantidade} unidades vendidas
+                      </Text>
+
+                      <Text style={styles.textoAuxiliar}>
+                        Faturamento: {formatarPreco(produto.faturamento)}
+                      </Text>
+                    </View>
+                  </View>
+                ))
+              )}
+            </View>
+
+            <View style={styles.resumo}>
+              <Text style={styles.textoAuxiliar}>
+                Total de vendas registradas
+              </Text>
+
+              <Text style={styles.numero}>{vendas.length}</Text>
+
+              <View style={styles.indicador}>
+                <Text style={styles.textoAuxiliar}>Vendas de hoje</Text>
+                <Text style={styles.numeroPequeno}>{vendasHoje.length}</Text>
+              </View>
+
+              <View style={styles.indicador}>
+                <Text style={styles.textoAuxiliar}>Faturamento de hoje</Text>
+                <Text style={styles.faturamento}>
+                  {formatarPreco(faturamentoHoje)}
+                </Text>
+              </View>
+
+              <View style={styles.indicador}>
+                <Text style={styles.textoAuxiliar}>Faturamento do mês</Text>
+                <Text style={styles.faturamento}>
+                  {formatarPreco(faturamentoMes)}
+                </Text>
+              </View>
+
+              <View style={styles.indicador}>
+                <Text style={styles.textoAuxiliar}>Ticket médio</Text>
+                <Text style={styles.faturamento}>
+                  {formatarPreco(ticketMedio)}
+                </Text>
+              </View>
+
+              <View style={styles.indicador}>
+                <Text style={styles.textoAuxiliar}>Faturamento acumulado</Text>
+                <Text style={styles.faturamento}>
+                  {formatarPreco(faturamento)}
+                </Text>
+              </View>
+            </View>
+          </View>
         }
         ListEmptyComponent={
           <Text style={styles.vazio}>Nenhuma venda registrada ainda.</Text>
@@ -662,7 +679,10 @@ export default function HistoricoVendas() {
                       "Opções da venda",
                       `Venda ${item.id.slice(0, 8)}`,
                       [
-                        { text: "Cancelar", style: "cancel" },
+                        {
+                          text: "Cancelar",
+                          style: "cancel",
+                        },
                         {
                           text: "Editar venda",
                           onPress: () => {
@@ -701,90 +721,168 @@ export default function HistoricoVendas() {
             </Text>
           </View>
         )}
+        ListFooterComponent={
+          <TouchableOpacity
+            style={styles.botaoVoltar}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.textoBotao}>Voltar ao painel</Text>
+          </TouchableOpacity>
+        }
       />
-
-      <TouchableOpacity
-        style={styles.botaoVoltar}
-        onPress={() => router.back()}
-      >
-        <Text style={styles.textoBotao}>Voltar ao painel</Text>
-      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8FAFC" },
+  container: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+  },
+
   centralizado: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#F8FAFC",
-  },
-  cabecalho: {
     padding: 20,
+  },
+
+  cabecalho: {
+    paddingHorizontal: 16,
+    paddingVertical: 20,
     backgroundColor: "#FFFFFF",
   },
-  titulo: { fontSize: 25, fontWeight: "700", color: "#0F172A" },
-  subtitulo: { marginTop: 6, color: "#64748B", fontSize: 14 },
+
+  titulo: {
+    fontSize: 25,
+    fontWeight: "700",
+    color: "#0F172A",
+    flexShrink: 1,
+  },
+
+  subtitulo: {
+    marginTop: 6,
+    color: "#64748B",
+    fontSize: 14,
+    lineHeight: 20,
+    flexShrink: 1,
+  },
+
   resumo: {
-    margin: 16,
+    marginHorizontal: 16,
+    marginTop: 12,
     marginBottom: 4,
-    padding: 18,
+    padding: 16,
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#E2E8F0",
   },
-  textoAuxiliar: { color: "#64748B", fontSize: 13 },
+
+  textoAuxiliar: {
+    color: "#64748B",
+    fontSize: 13,
+    lineHeight: 19,
+    flexShrink: 1,
+  },
+
   numero: {
     fontSize: 28,
     fontWeight: "700",
     color: "#0F172A",
     marginVertical: 4,
   },
+
   faturamento: {
     fontSize: 23,
     fontWeight: "700",
     color: "#15803D",
     marginTop: 4,
+    flexShrink: 1,
   },
-  observacao: { color: "#64748B", fontSize: 11, marginTop: 8 },
 
-  lista: { padding: 16, paddingTop: 12, paddingBottom: 24, flexGrow: 1 },
+  observacao: {
+    color: "#64748B",
+    fontSize: 11,
+    marginTop: 8,
+  },
+
+  lista: {
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 24,
+    flexGrow: 1,
+  },
 
   card: {
-    padding: 16,
+    padding: 14,
     marginBottom: 10,
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#E2E8F0",
   },
+
   linha: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    flexWrap: "wrap",
     gap: 8,
   },
 
-  valor: { fontSize: 18, fontWeight: "700", color: "#0F172A" },
-  pagamento: { fontSize: 12, color: "#2563EB" },
-  data: { marginTop: 8, fontSize: 13, color: "#475569" },
-  identificador: { marginTop: 5, fontSize: 11, color: "#94A3B8" },
+  valor: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#0F172A",
+    flexShrink: 1,
+  },
+
+  pagamento: {
+    fontSize: 12,
+    color: "#2563EB",
+    flexShrink: 1,
+  },
+
+  data: {
+    marginTop: 8,
+    fontSize: 13,
+    color: "#475569",
+  },
+
+  identificador: {
+    marginTop: 5,
+    fontSize: 11,
+    color: "#94A3B8",
+  },
+
   vazio: {
     textAlign: "center",
     padding: 24,
     color: "#64748B",
+    lineHeight: 20,
   },
+
   botaoVoltar: {
     padding: 16,
+    marginTop: 8,
+    marginBottom: 12,
     alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#FFFFFF",
-    borderTopWidth: 1,
+    borderWidth: 1,
     borderColor: "#E2E8F0",
+    borderRadius: 12,
+    minHeight: 52,
   },
-  textoBotao: { color: "#2563EB", fontWeight: "700", fontSize: 15 },
+
+  textoBotao: {
+    color: "#2563EB",
+    fontWeight: "700",
+    fontSize: 15,
+    textAlign: "center",
+  },
 
   indicador: {
     marginTop: 14,
@@ -792,6 +890,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#E2E8F0",
   },
+
   numeroPequeno: {
     fontSize: 22,
     fontWeight: "700",
@@ -803,23 +902,29 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 12,
     marginBottom: 12,
-    padding: 16,
+    padding: 14,
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#E2E8F0",
   },
+
   tituloRanking: {
     fontSize: 18,
     fontWeight: "700",
     color: "#0F172A",
+    flexShrink: 1,
   },
+
   subtituloRanking: {
     fontSize: 12,
     color: "#64748B",
     marginTop: 4,
     marginBottom: 12,
+    lineHeight: 18,
+    flexShrink: 1,
   },
+
   itemRanking: {
     flexDirection: "row",
     alignItems: "center",
@@ -828,49 +933,56 @@ const styles = StyleSheet.create({
     borderTopColor: "#E2E8F0",
     gap: 12,
   },
+
   posicaoRanking: {
     width: 36,
     height: 36,
+    flexShrink: 0,
     borderRadius: 10,
     backgroundColor: "#DBEAFE",
     alignItems: "center",
     justifyContent: "center",
   },
+
   textoPosicao: {
     fontSize: 14,
     fontWeight: "700",
     color: "#1D4ED8",
   },
+
   infoRanking: {
     flex: 1,
+    minWidth: 0,
     gap: 3,
   },
+
   nomeRanking: {
     fontSize: 14,
     fontWeight: "700",
     color: "#0F172A",
+    flexShrink: 1,
   },
 
   filtrosPeriodo: {
-    marginTop: 16,
-    marginBottom: 20,
+    marginTop: 12,
+    marginBottom: 16,
     flexGrow: 0,
     flexShrink: 0,
-    height: 50,
+    height: 48,
   },
 
   conteudoFiltros: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 2,
+    gap: 8,
+    paddingHorizontal: 16,
   },
 
   botaoPeriodo: {
-    width: 145,
-    height: 46,
+    minWidth: 110,
+    height: 42,
     flexShrink: 0,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#D1D5DB",
@@ -883,19 +995,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#2563EB",
     borderColor: "#2563EB",
   },
+
   textoPeriodo: {
     color: "#374151",
     fontSize: 12,
     fontWeight: "600",
+    textAlign: "center",
   },
+
   textoPeriodoAtivo: {
     color: "#FFFFFF",
   },
+
   graficoCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 14,
-    padding: 16,
-    marginBottom: 20,
+    padding: 14,
+    marginHorizontal: 16,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
@@ -912,16 +1029,21 @@ const styles = StyleSheet.create({
     color: "#2563EB",
     marginTop: 8,
     textAlign: "center",
+    flexShrink: 1,
   },
+
   acoesVenda: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    justifyContent: "flex-end",
+    gap: 8,
+    flexShrink: 1,
   },
 
   botaoOpcoes: {
     width: 40,
     height: 40,
+    flexShrink: 0,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#EFF6FF",
