@@ -9,6 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -34,6 +35,7 @@ export default function HistoricoVendas() {
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [atualizando, setAtualizando] = useState(false);
+  const [buscaData, setBuscaData] = useState("");
   const [itensVenda, setItensVenda] = useState<
     {
       venda_id: string;
@@ -198,6 +200,20 @@ export default function HistoricoVendas() {
     }, [carregarVendas]),
   );
 
+  function formatarBuscaData(valor: string) {
+    const numeros = valor.replace(/\D/g, "").slice(0, 8);
+
+    if (numeros.length <= 2) {
+      return numeros;
+    }
+
+    if (numeros.length <= 4) {
+      return `${numeros.slice(0, 2)}/${numeros.slice(2)}`;
+    }
+
+    return `${numeros.slice(0, 2)}/${numeros.slice(2, 4)}/${numeros.slice(4)}`;
+  }
+
   function formatarPreco(valor: number) {
     return Number(valor).toLocaleString("pt-BR", {
       style: "currency",
@@ -259,6 +275,23 @@ export default function HistoricoVendas() {
 
   const vendasFiltradas = vendas.filter((venda) => {
     const data = dataDaVenda(venda);
+
+    if (buscaData.length > 0) {
+      if (buscaData.length !== 10) return false;
+
+      const [dia, mes, ano] = buscaData.split("/").map(Number);
+
+      if (
+        data.getDate() !== dia ||
+        data.getMonth() + 1 !== mes ||
+        data.getFullYear() !== ano
+      ) {
+        return false;
+      }
+
+      return true;
+    }
+
     return data >= inicioPeriodo && data < inicioAmanha;
   });
 
@@ -484,6 +517,25 @@ export default function HistoricoVendas() {
                 </Text>
               </TouchableOpacity>
             </ScrollView>
+            <View style={styles.buscaDataContainer}>
+              <Text style={styles.labelBuscaData}>Buscar vendas por data</Text>
+
+              <TextInput
+                style={styles.inputBuscaData}
+                placeholder="DD/MM/AAAA"
+                placeholderTextColor="#94A3B8"
+                value={buscaData}
+                onChangeText={(valor) => setBuscaData(formatarBuscaData(valor))}
+                keyboardType="numeric"
+                maxLength={10}
+              />
+
+              {buscaData.length > 0 && (
+                <TouchableOpacity onPress={() => setBuscaData("")}>
+                  <Text style={styles.limparBuscaData}>Limpar busca</Text>
+                </TouchableOpacity>
+              )}
+            </View>
 
             <View style={styles.graficoCard}>
               <Text style={styles.tituloRanking}>Faturamento por período</Text>
@@ -1057,5 +1109,35 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#2563EB",
     lineHeight: 32,
+  },
+
+  buscaDataContainer: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+
+  labelBuscaData: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#334155",
+    marginBottom: 8,
+  },
+
+  inputBuscaData: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: "#0F172A",
+  },
+
+  limparBuscaData: {
+    color: "#2563EB",
+    fontSize: 13,
+    fontWeight: "600",
+    marginTop: 8,
   },
 });
