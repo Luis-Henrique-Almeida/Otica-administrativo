@@ -737,30 +737,31 @@ export default function HistoricoVendas() {
                   <Text style={styles.textoOpcoes}>⋮</Text>
                 </Pressable>
               </View>
-              {vendaSelecionada === item.id && (
-                <View style={styles.menuVenda}>
-                  <TouchableOpacity
-                    style={styles.opcaoMenu}
-                    onPress={() => {
-                      setVendaSelecionada(null);
-                      router.push({
-                        pathname: "/editar-venda",
-                        params: { id: item.id },
-                      });
-                    }}
-                  >
-                    <Text style={styles.textoEditar}>Editar venda</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.opcaoMenu}
-                    onPress={() => setVendaSelecionada(null)}
-                  >
-                    <Text style={styles.textoExcluir}>Excluir venda</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
             </View>
+
+            {vendaSelecionada === item.id && (
+              <View style={styles.menuVenda}>
+                <TouchableOpacity
+                  style={styles.opcaoMenu}
+                  onPress={() => {
+                    setVendaSelecionada(null);
+                    router.push({
+                      pathname: "/editar-venda",
+                      params: { id: item.id },
+                    });
+                  }}
+                >
+                  <Text style={styles.textoEditar}>Editar venda</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.opcaoMenu}
+                  onPress={() => setVendaSelecionada(null)}
+                >
+                  <Text style={styles.textoExcluir}>Excluir venda</Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
             <Text style={styles.data}>
               {formatarData(item.data_venda || item.created_at)}
@@ -783,7 +784,6 @@ export default function HistoricoVendas() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -1138,6 +1138,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 8,
   },
+
   menuVenda: {
     marginTop: 10,
     padding: 8,
@@ -1146,17 +1147,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E2E8F0",
   },
-
   opcaoMenu: {
     paddingVertical: 12,
     paddingHorizontal: 10,
   },
-
   textoEditar: {
     color: "#2563EB",
     fontWeight: "600",
   },
-
   textoExcluir: {
     color: "#DC2626",
     fontWeight: "600",
