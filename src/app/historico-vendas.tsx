@@ -36,6 +36,7 @@ export default function HistoricoVendas() {
   const [carregando, setCarregando] = useState(true);
   const [atualizando, setAtualizando] = useState(false);
   const [buscaData, setBuscaData] = useState("");
+  const [vendaSelecionada, setVendaSelecionada] = useState<string | null>(null);
   const [itensVenda, setItensVenda] = useState<
     {
       venda_id: string;
@@ -726,42 +727,39 @@ export default function HistoricoVendas() {
                 <Text style={styles.pagamento}>{item.forma_pagamento}</Text>
 
                 <Pressable
-                  onPress={() => {
-                    Alert.alert(
-                      "Opções da venda",
-                      `Venda ${item.id.slice(0, 8)}`,
-                      [
-                        {
-                          text: "Cancelar",
-                          style: "cancel",
-                        },
-                        {
-                          text: "Editar venda",
-                          onPress: () => {
-                            Alert.alert(
-                              "Em desenvolvimento",
-                              "Vamos implementar a edição da venda no próximo passo.",
-                            );
-                          },
-                        },
-                        {
-                          text: "Excluir venda",
-                          style: "destructive",
-                          onPress: () => {
-                            Alert.alert(
-                              "Em desenvolvimento",
-                              "Vamos implementar a exclusão com atualização segura do estoque.",
-                            );
-                          },
-                        },
-                      ],
-                    );
-                  }}
+                  onPress={() =>
+                    setVendaSelecionada(
+                      vendaSelecionada === item.id ? null : item.id,
+                    )
+                  }
                   style={styles.botaoOpcoes}
                 >
                   <Text style={styles.textoOpcoes}>⋮</Text>
                 </Pressable>
               </View>
+              {vendaSelecionada === item.id && (
+                <View style={styles.menuVenda}>
+                  <TouchableOpacity
+                    style={styles.opcaoMenu}
+                    onPress={() => {
+                      setVendaSelecionada(null);
+                      router.push({
+                        pathname: "/editar-venda",
+                        params: { id: item.id },
+                      });
+                    }}
+                  >
+                    <Text style={styles.textoEditar}>Editar venda</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.opcaoMenu}
+                    onPress={() => setVendaSelecionada(null)}
+                  >
+                    <Text style={styles.textoExcluir}>Excluir venda</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
 
             <Text style={styles.data}>
@@ -1139,5 +1137,28 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     marginTop: 8,
+  },
+  menuVenda: {
+    marginTop: 10,
+    padding: 8,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+
+  opcaoMenu: {
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+  },
+
+  textoEditar: {
+    color: "#2563EB",
+    fontWeight: "600",
+  },
+
+  textoExcluir: {
+    color: "#DC2626",
+    fontWeight: "600",
   },
 });
