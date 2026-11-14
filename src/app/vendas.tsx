@@ -428,7 +428,16 @@ export default function Vendas() {
         p_data_venda: dataConvertida,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.log("ERRO AO REGISTRAR VENDA:", error);
+
+        Alert.alert(
+          "Erro no cadastro",
+          `${error.message}\n${error.details || ""}\n${error.hint || ""}`,
+        );
+
+        return;
+      }
 
       Alert.alert(
         "Venda registrada!",
