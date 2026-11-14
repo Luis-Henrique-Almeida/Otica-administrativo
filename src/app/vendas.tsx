@@ -310,6 +310,10 @@ export default function Vendas() {
 
       if (error) throw error;
 
+      console.log("PRODUTOS RETORNADOS:", data);
+
+      setProdutos((data ?? []) as Produto[]);
+
       setProdutos((data ?? []) as Produto[]);
     } catch (error) {
       Alert.alert(
