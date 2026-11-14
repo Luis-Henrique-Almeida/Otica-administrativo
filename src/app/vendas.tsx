@@ -262,6 +262,14 @@ export default function Vendas() {
   const [formaPagamento, setFormaPagamento] = useState("PIX");
   const [carregando, setCarregando] = useState(true);
   const [buscaProduto, setBuscaProduto] = useState("");
+  const [dataVenda, setDataVenda] = useState(() => {
+    const hoje = new Date();
+    const dia = String(hoje.getDate()).padStart(2, "0");
+    const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+    const ano = hoje.getFullYear();
+
+    return `${dia}/${mes}/${ano}`;
+  });
 
   useEffect(() => {
     carregarProdutos();
@@ -331,6 +339,44 @@ export default function Vendas() {
     });
   }
 
+  function formatarDataDigitada(valor: string) {
+    const numeros = valor.replace(/\D/g, "").slice(0, 8);
+
+    if (numeros.length <= 2) return numeros;
+
+    if (numeros.length <= 4) {
+      return `${numeros.slice(0, 2)}/${numeros.slice(2)}`;
+    }
+
+    return `${numeros.slice(0, 2)}/${numeros.slice(2, 4)}/${numeros.slice(4)}`;
+  }
+
+  function converterDataParaTimestamp(valor: string): string | null {
+    const partes = valor.split("/");
+
+    if (partes.length !== 3 || partes.some((p) => !p)) {
+      return null;
+    }
+
+    const dia = Number(partes[0]);
+    const mes = Number(partes[1]);
+    const ano = Number(partes[2]);
+
+    if (partes[2].length !== 4) return null;
+
+    const data = new Date(ano, mes - 1, dia, 12, 0, 0);
+
+    if (
+      data.getDate() !== dia ||
+      data.getMonth() !== mes - 1 ||
+      data.getFullYear() !== ano
+    ) {
+      return null;
+    }
+
+    return data.toISOString();
+  }
+
   const itensSelecionados = produtos
     .map((produto) => ({
       produto,
@@ -360,6 +406,15 @@ export default function Vendas() {
       );
       return;
     }
+    const dataConvertida = converterDataParaTimestamp(dataVenda);
+
+    if (!dataConvertida) {
+      Alert.alert(
+        "Data inválida",
+        "Informe uma data válida no formato DD/MM/AAAA.",
+      );
+      return;
+    }
 
     try {
       const itens = itensSelecionados.map((item) => ({
@@ -370,6 +425,7 @@ export default function Vendas() {
       const { data, error } = await supabase.rpc("registrar_venda", {
         p_itens: itens,
         p_forma_pagamento: formaPagamento,
+        p_data_venda: dataConvertida,
       });
 
       if (error) throw error;
@@ -469,6 +525,18 @@ export default function Vendas() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        <Text style={styles.labelPagamento}>Data da venda</Text>
+
+        <TextInput
+          style={styles.campoBusca}
+          placeholder="DD/MM/AAAA"
+          placeholderTextColor="#9CA3AF"
+          value={dataVenda}
+          onChangeText={(valor) => setDataVenda(formatarDataDigitada(valor))}
+          keyboardType="numeric"
+          maxLength={10}
+        />
+
         <Text style={styles.labelPagamento}>Forma de pagamento</Text>
 
         <View style={styles.pagamentos}>
