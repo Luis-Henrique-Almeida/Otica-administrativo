@@ -272,7 +272,27 @@ export default function Vendas() {
   });
 
   useEffect(() => {
+    const channel = supabase
+      .channel("estoque-produtos")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "produtos",
+        },
+        () => {
+          console.log("Estoque atualizado! Recarregando produtos...");
+          carregarProdutos();
+        },
+      )
+      .subscribe();
+
     carregarProdutos();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   async function carregarProdutos() {
@@ -311,8 +331,6 @@ export default function Vendas() {
       if (error) throw error;
 
       console.log("PRODUTOS RETORNADOS:", data);
-
-      setProdutos((data ?? []) as Produto[]);
 
       setProdutos((data ?? []) as Produto[]);
     } catch (error) {
