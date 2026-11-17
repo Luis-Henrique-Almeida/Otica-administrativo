@@ -1,5 +1,5 @@
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -131,9 +131,11 @@ export default function Produtos() {
     }
   }
 
-  useEffect(() => {
-    carregarProdutos();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      carregarProdutos();
+    }, []),
+  );
 
   function formatarPreco(valor: number) {
     return valor.toLocaleString("pt-BR", {

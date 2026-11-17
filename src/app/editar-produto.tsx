@@ -1,16 +1,16 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { supabase } from "../supabase";
 
@@ -180,9 +180,9 @@ export default function EditarProduto() {
         return;
       }
 
-      Alert.alert("Sucesso!", "Produto atualizado com sucesso.", [
-        { text: "OK", onPress: () => router.back() },
-      ]);
+      console.log("PRODUTO ATUALIZADO COM SUCESSO!");
+
+      router.replace("/produtos");
     } catch (erro) {
       Alert.alert("Erro inesperado", String(erro));
     } finally {
