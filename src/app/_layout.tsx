@@ -16,6 +16,10 @@ export default function RootLayout() {
         name="editar-produto"
         options={{ title: "Editar Produto" }}
       />
+      <Stack.Screen
+        name="cadastro-produto"
+        options={{ title: "Cadastrar Produto" }}
+      />
     </Stack>
   );
 }
