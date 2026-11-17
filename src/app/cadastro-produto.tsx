@@ -83,12 +83,8 @@ export default function CadastroProduto() {
         return;
       }
 
-      Alert.alert("Sucesso!", "Produto cadastrado com sucesso.", [
-        {
-          text: "OK",
-          onPress: () => router.replace("/produtos"),
-        },
-      ]);
+      Alert.alert("Sucesso!", "Produto cadastrado com sucesso.");
+      router.replace("/produtos");
     } catch (erro) {
       Alert.alert("Erro inesperado", String(erro));
     } finally {
