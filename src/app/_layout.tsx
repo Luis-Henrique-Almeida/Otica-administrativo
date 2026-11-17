@@ -12,6 +12,10 @@ export default function RootLayout() {
       />
       <Stack.Screen name="produtos" options={{ title: "Estoque" }} />
       <Stack.Screen name="vendas" options={{ title: "Registrar Vendas" }} />
+      <Stack.Screen
+        name="editar-produto"
+        options={{ title: "Editar Produto" }}
+      />
     </Stack>
   );
 }
