@@ -182,6 +182,8 @@ export default function EditarProduto() {
 
       console.log("PRODUTO ATUALIZADO COM SUCESSO!");
 
+      setSalvando(false);
+
       router.replace("/produtos");
     } catch (erro) {
       Alert.alert("Erro inesperado", String(erro));
