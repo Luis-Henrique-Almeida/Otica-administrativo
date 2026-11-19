@@ -218,10 +218,6 @@ export default function Produtos() {
   return (
     <View style={styles.container}>
       <View style={styles.cabecalho}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.voltar}>‹ Voltar</Text>
-        </TouchableOpacity>
-
         <Text style={styles.titulo}>Produtos e estoque</Text>
         <Text style={styles.subtitulo}>Produtos cadastrados na sua ótica</Text>
       </View>
