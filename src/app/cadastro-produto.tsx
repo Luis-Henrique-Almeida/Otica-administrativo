@@ -83,7 +83,11 @@ export default function CadastroProduto() {
         return;
       }
 
-      Alert.alert("Sucesso!", "Produto cadastrado com sucesso.");
+      console.log("Cadastro concluído. Iniciando navegação...");
+
+      setSalvando(false);
+
+      router.dismissAll();
       router.replace("/produtos");
     } catch (erro) {
       Alert.alert("Erro inesperado", String(erro));
