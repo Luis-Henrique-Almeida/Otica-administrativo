@@ -87,7 +87,7 @@ export default function CadastroProduto() {
 
       setSalvando(false);
 
-      router.dismissTo("/produtos");
+      router.replace("/produtos");
     } catch (erro) {
       Alert.alert("Erro inesperado", String(erro));
     } finally {
