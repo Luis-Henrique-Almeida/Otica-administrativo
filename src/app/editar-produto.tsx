@@ -191,6 +191,75 @@ export default function EditarProduto() {
       setSalvando(false);
     }
   }
+  async function excluirProduto() {
+    if (!id || Array.isArray(id) || !oticaId) {
+      Alert.alert("Erro", "Não foi possível identificar o produto.");
+      return;
+    }
+
+    Alert.alert(
+      "Excluir produto",
+      "Tem certeza que deseja excluir este produto? Essa ação não pode ser desfeita.",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const { data: authData, error: authError } =
+                await supabase.auth.getUser();
+
+              if (authError || !authData.user) {
+                Alert.alert("Sessão encerrada", "Faça login novamente.");
+                router.replace("/");
+                return;
+              }
+
+              const { data: perfil, error: perfilError } = await supabase
+                .from("usuarios")
+                .select("otica_id, ativo")
+                .eq("id", authData.user.id)
+                .single();
+
+              if (
+                perfilError ||
+                !perfil ||
+                !perfil.ativo ||
+                perfil.otica_id !== oticaId
+              ) {
+                Alert.alert("Erro", "Não foi possível validar seu acesso.");
+                return;
+              }
+
+              const { error: exclusaoError } = await supabase
+                .from("produtos")
+                .delete()
+                .eq("id", id)
+                .eq("otica_id", perfil.otica_id);
+
+              if (exclusaoError) {
+                Alert.alert(
+                  "Não foi possível excluir",
+                  "Este produto pode estar vinculado a vendas. Considere desativá-lo.\n\n" +
+                    exclusaoError.message,
+                );
+                return;
+              }
+
+              Alert.alert("Sucesso", "Produto excluído.");
+              router.replace("/produtos");
+            } catch (erro) {
+              Alert.alert("Erro inesperado", String(erro));
+            }
+          },
+        },
+      ],
+    );
+  }
 
   if (carregando) {
     return (
@@ -296,6 +365,27 @@ export default function EditarProduto() {
               </Text>
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#FEE2E2",
+              padding: 14,
+              borderRadius: 10,
+              alignItems: "center",
+              marginTop: 16,
+            }}
+            onPress={excluirProduto}
+            activeOpacity={0.7}
+          >
+            <Text
+              style={{
+                color: "#991B1B",
+                fontWeight: "600",
+              }}
+            >
+              Excluir produto
+            </Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.botao, salvando && styles.botaoDesativado]}
