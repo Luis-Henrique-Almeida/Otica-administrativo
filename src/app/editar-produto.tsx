@@ -192,73 +192,59 @@ export default function EditarProduto() {
     }
   }
   async function excluirProduto() {
-    Alert.alert("Teste", "A função excluirProduto foi chamada.");
+    if (!id || Array.isArray(id) || !oticaId) return;
 
-    if (!id || Array.isArray(id) || !oticaId) {
-      Alert.alert("Erro", "Não foi possível identificar o produto.");
+    const executar = async () => {
+      setSalvando(true);
+      try {
+        const { data, error } = await supabase
+          .from("produtos")
+          .delete()
+          .eq("id", id)
+          .eq("otica_id", oticaId)
+          .select("id"); // sem isso, não dá para saber se apagou
+
+        if (error) {
+          if (error.code === "23503") {
+            Alert.alert(
+              "Não é possível excluir",
+              "Este produto já tem vendas registradas. Desative-o em vez de excluir.",
+            );
+          } else {
+            Alert.alert("Erro ao excluir", error.message);
+          }
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          Alert.alert(
+            "Nada foi excluído",
+            "Provavelmente falta uma política de DELETE (RLS) na tabela produtos.",
+          );
+          return;
+        }
+
+        router.back();
+      } finally {
+        setSalvando(false);
+      }
+    };
+
+    if (Platform.OS === "web") {
+      if (
+        window.confirm(`Excluir "${nome}"? Essa ação não pode ser desfeita.`)
+      ) {
+        await executar();
+      }
       return;
     }
 
     Alert.alert(
       "Excluir produto",
-      "Tem certeza que deseja excluir este produto? Essa ação não pode ser desfeita.",
+      `Excluir "${nome}"? Essa ação não pode ser desfeita.`,
       [
-        {
-          text: "Cancelar",
-          style: "cancel",
-        },
-        {
-          text: "Excluir",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const { data: authData, error: authError } =
-                await supabase.auth.getUser();
-
-              if (authError || !authData.user) {
-                Alert.alert("Sessão encerrada", "Faça login novamente.");
-                router.replace("/");
-                return;
-              }
-
-              const { data: perfil, error: perfilError } = await supabase
-                .from("usuarios")
-                .select("otica_id, ativo")
-                .eq("id", authData.user.id)
-                .single();
-
-              if (
-                perfilError ||
-                !perfil ||
-                !perfil.ativo ||
-                perfil.otica_id !== oticaId
-              ) {
-                Alert.alert("Erro", "Não foi possível validar seu acesso.");
-                return;
-              }
-
-              const { error: exclusaoError } = await supabase
-                .from("produtos")
-                .delete()
-                .eq("id", id)
-                .eq("otica_id", perfil.otica_id);
-
-              if (exclusaoError) {
-                Alert.alert(
-                  "Não foi possível excluir",
-                  "Este produto pode estar vinculado a vendas. Considere desativá-lo.\n\n" +
-                    exclusaoError.message,
-                );
-                return;
-              }
-
-              Alert.alert("Sucesso", "Produto excluído.");
-              router.replace("/produtos");
-            } catch (erro) {
-              Alert.alert("Erro inesperado", String(erro));
-            }
-          },
-        },
+        { text: "Cancelar", style: "cancel" },
+        { text: "Excluir", style: "destructive", onPress: executar },
       ],
     );
   }
@@ -365,24 +351,12 @@ export default function EditarProduto() {
           </View>
 
           <TouchableOpacity
-            style={{
-              backgroundColor: "#FEE2E2",
-              padding: 14,
-              borderRadius: 10,
-              alignItems: "center",
-              marginTop: 16,
-            }}
-            onPress={() => excluirProduto()}
+            style={styles.botaoExcluir}
+            onPress={excluirProduto}
+            disabled={salvando}
             activeOpacity={0.7}
           >
-            <Text
-              style={{
-                color: "#991B1B",
-                fontWeight: "600",
-              }}
-            >
-              Excluir produto
-            </Text>
+            <Text style={styles.botaoExcluirTexto}>Excluir produto</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -511,5 +485,17 @@ const styles = StyleSheet.create({
     color: "#64748B",
     marginTop: 4,
     marginBottom: 12,
+  },
+  botaoExcluir: {
+    backgroundColor: "#FEE2E2",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 12,
+  },
+  botaoExcluirTexto: {
+    color: "#991B1B",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
