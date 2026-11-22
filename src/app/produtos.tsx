@@ -282,11 +282,7 @@ const styles = StyleSheet.create({
   cabecalho: {
     marginBottom: 22,
   },
-  voltar: {
-    color: "#4b5563",
-    fontSize: 16,
-    marginBottom: 18,
-  },
+
   titulo: {
     fontSize: 26,
     fontWeight: "bold",

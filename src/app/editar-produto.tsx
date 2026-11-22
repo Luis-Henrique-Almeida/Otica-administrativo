@@ -398,11 +398,7 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     fontSize: 15,
   },
-  voltar: {
-    color: "#374151",
-    fontSize: 16,
-    marginBottom: 24,
-  },
+
   titulo: {
     color: "#111827",
     fontSize: 28,

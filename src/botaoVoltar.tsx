@@ -1,5 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Href, useRouter } from "expo-router";
-import { Text, TouchableOpacity } from "react-native";
+import { TouchableOpacity } from "react-native";
 
 type Props = {
   destino: Href;
@@ -19,10 +20,20 @@ export function BotaoVoltar({ destino }: Props) {
   return (
     <TouchableOpacity
       onPress={voltar}
-      style={{ paddingHorizontal: 12, paddingVertical: 6 }}
-      activeOpacity={0.7}
+      activeOpacity={0.6}
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      accessibilityLabel="Voltar"
+      style={{
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        backgroundColor: "#F3F4F6",
+        alignItems: "center",
+        justifyContent: "center",
+        marginLeft: 8,
+      }}
     >
-      <Text style={{ fontSize: 16, color: "#111827" }}>‹ Voltar</Text>
+      <Ionicons name="arrow-back" size={22} color="#111827" />
     </TouchableOpacity>
   );
 }

@@ -184,11 +184,6 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingBottom: 40,
   },
-  voltar: {
-    color: "#374151",
-    fontSize: 16,
-    marginBottom: 24,
-  },
   titulo: {
     color: "#111827",
     fontSize: 28,
