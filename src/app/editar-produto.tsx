@@ -281,10 +281,6 @@ export default function EditarProduto() {
         contentContainerStyle={styles.conteudo}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.voltar}>‹ Voltar</Text>
-        </TouchableOpacity>
-
         <Text style={styles.titulo}>Editar produto</Text>
         <Text style={styles.subtitulo}>
           Atualize as informações do produto.
@@ -376,7 +372,7 @@ export default function EditarProduto() {
               alignItems: "center",
               marginTop: 16,
             }}
-            onPress={excluirProduto}
+            onPress={() => excluirProduto()}
             activeOpacity={0.7}
           >
             <Text
