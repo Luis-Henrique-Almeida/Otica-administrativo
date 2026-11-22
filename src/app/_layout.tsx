@@ -1,24 +1,38 @@
 import { Stack } from "expo-router";
+import { BotaoVoltar } from "../botaoVoltar";
 
 export default function RootLayout() {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="dashboard" options={{ headerShown: false }} />
-      <Stack.Screen name="explore" options={{ title: "Explorar" }} />
       <Stack.Screen
-        name="historico-vendas"
-        options={{ title: "Histórico de Vendas" }}
-      />
-      <Stack.Screen name="produtos" options={{ title: "Estoque" }} />
-      <Stack.Screen name="vendas" options={{ title: "Registrar Vendas" }} />
-      <Stack.Screen
-        name="editar-produto"
-        options={{ title: "Editar Produto" }}
+        name="produtos"
+        options={{
+          title: "Estoque",
+          headerLeft: () => <BotaoVoltar destino="/dashboard" />,
+        }}
       />
       <Stack.Screen
         name="cadastro-produto"
-        options={{ title: "Cadastrar Produto" }}
+        options={{
+          title: "Novo produto",
+          headerLeft: () => <BotaoVoltar destino="/produtos" />,
+        }}
+      />
+      <Stack.Screen
+        name="editar-produto"
+        options={{
+          title: "Editar produto",
+          headerLeft: () => <BotaoVoltar destino="/produtos" />,
+        }}
+      />
+      <Stack.Screen
+        name="vendas"
+        options={{
+          title: "Vendas",
+          headerLeft: () => <BotaoVoltar destino="/dashboard" />,
+        }}
       />
     </Stack>
   );
