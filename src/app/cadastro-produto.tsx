@@ -104,10 +104,6 @@ export default function CadastroProduto() {
         contentContainerStyle={styles.conteudo}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.voltar}>‹ Voltar</Text>
-        </TouchableOpacity>
-
         <Text style={styles.titulo}>Novo produto</Text>
         <Text style={styles.subtitulo}>
           Cadastre um produto no estoque da sua ótica.

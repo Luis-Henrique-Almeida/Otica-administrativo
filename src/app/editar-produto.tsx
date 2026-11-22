@@ -372,10 +372,7 @@ export default function EditarProduto() {
               alignItems: "center",
               marginTop: 16,
             }}
-            onPress={() => {
-              console.log("BOTÃO EXCLUIR CLICADO");
-              Alert.alert("Teste", "O botão foi clicado!");
-            }}
+            onPress={() => excluirProduto()}
             activeOpacity={0.7}
           >
             <Text
