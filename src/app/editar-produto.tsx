@@ -192,6 +192,8 @@ export default function EditarProduto() {
     }
   }
   async function excluirProduto() {
+    Alert.alert("Teste", "A função excluirProduto foi chamada.");
+
     if (!id || Array.isArray(id) || !oticaId) {
       Alert.alert("Erro", "Não foi possível identificar o produto.");
       return;
