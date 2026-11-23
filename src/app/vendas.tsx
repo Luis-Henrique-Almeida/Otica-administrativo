@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { DataVenda } from "../DataVenda";
 import { supabase } from "../supabase";
 
 type Produto = {
@@ -254,6 +256,19 @@ const styles = StyleSheet.create({
   },
 });
 
+function aviso(titulo: string, mensagem?: string) {
+  if (Platform.OS === "web") {
+    window.alert(mensagem ? `${titulo}\n\n${mensagem}` : titulo);
+  } else {
+    Alert.alert(titulo, mensagem);
+  }
+}
+
+function mensagemDoErro(erro: unknown, padrao: string) {
+  const mensagem = (erro as { message?: string } | null)?.message;
+  return mensagem || padrao;
+}
+
 export default function Vendas() {
   const router = useRouter();
 
@@ -261,30 +276,17 @@ export default function Vendas() {
   const [quantidades, setQuantidades] = useState<Record<string, string>>({});
   const [formaPagamento, setFormaPagamento] = useState("PIX");
   const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
   const [buscaProduto, setBuscaProduto] = useState("");
-  const [dataVenda, setDataVenda] = useState(() => {
-    const hoje = new Date();
-    const dia = String(hoje.getDate()).padStart(2, "0");
-    const mes = String(hoje.getMonth() + 1).padStart(2, "0");
-    const ano = hoje.getFullYear();
-
-    return `${dia}/${mes}/${ano}`;
-  });
+  const [dataVenda, setDataVenda] = useState(new Date());
 
   useEffect(() => {
     const channel = supabase
       .channel("estoque-produtos")
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "produtos",
-        },
-        () => {
-          console.log("Estoque atualizado! Recarregando produtos...");
-          carregarProdutos();
-        },
+        { event: "*", schema: "public", table: "produtos" },
+        () => carregarProdutos(true),
       )
       .subscribe();
 
@@ -295,15 +297,15 @@ export default function Vendas() {
     };
   }, []);
 
-  async function carregarProdutos() {
+  async function carregarProdutos(silencioso = false) {
     try {
-      setCarregando(true);
+      if (!silencioso) setCarregando(true);
 
       const { data: authData, error: authError } =
         await supabase.auth.getUser();
 
       if (authError || !authData.user) {
-        Alert.alert("Sessão expirada", "Faça login novamente.");
+        aviso("Sessão expirada", "Faça login novamente.");
         router.replace("/");
         return;
       }
@@ -317,7 +319,7 @@ export default function Vendas() {
       if (perfilError) throw perfilError;
 
       if (!perfil?.ativo || !perfil.otica_id) {
-        Alert.alert("Acesso bloqueado", "Usuário inativo ou sem ótica.");
+        aviso("Acesso bloqueado", "Usuário inativo ou sem ótica.");
         return;
       }
 
@@ -330,15 +332,11 @@ export default function Vendas() {
 
       if (error) throw error;
 
-      console.log("PRODUTOS RETORNADOS:", data);
-
       setProdutos((data ?? []) as Produto[]);
-    } catch (error) {
-      Alert.alert(
+    } catch (erro) {
+      aviso(
         "Erro",
-        error instanceof Error
-          ? error.message
-          : "Não foi possível carregar os produtos.",
+        mensagemDoErro(erro, "Não foi possível carregar os produtos."),
       );
     } finally {
       setCarregando(false);
@@ -346,11 +344,9 @@ export default function Vendas() {
   }
 
   function alterarQuantidade(id: string, valor: string) {
-    const somenteNumeros = valor.replace(/[^0-9]/g, "");
-
     setQuantidades((anterior) => ({
       ...anterior,
-      [id]: somenteNumeros,
+      [id]: valor.replace(/[^0-9]/g, ""),
     }));
   }
 
@@ -359,44 +355,6 @@ export default function Vendas() {
       style: "currency",
       currency: "BRL",
     });
-  }
-
-  function formatarDataDigitada(valor: string) {
-    const numeros = valor.replace(/\D/g, "").slice(0, 8);
-
-    if (numeros.length <= 2) return numeros;
-
-    if (numeros.length <= 4) {
-      return `${numeros.slice(0, 2)}/${numeros.slice(2)}`;
-    }
-
-    return `${numeros.slice(0, 2)}/${numeros.slice(2, 4)}/${numeros.slice(4)}`;
-  }
-
-  function converterDataParaTimestamp(valor: string): string | null {
-    const partes = valor.split("/");
-
-    if (partes.length !== 3 || partes.some((p) => !p)) {
-      return null;
-    }
-
-    const dia = Number(partes[0]);
-    const mes = Number(partes[1]);
-    const ano = Number(partes[2]);
-
-    if (partes[2].length !== 4) return null;
-
-    const data = new Date(ano, mes - 1, dia, 12, 0, 0);
-
-    if (
-      data.getDate() !== dia ||
-      data.getMonth() !== mes - 1 ||
-      data.getFullYear() !== ano
-    ) {
-      return null;
-    }
-
-    return data.toISOString();
   }
 
   const itensSelecionados = produtos
@@ -411,9 +369,11 @@ export default function Vendas() {
     0,
   );
 
-  async function revisarVenda() {
+  async function registrarVenda() {
+    if (salvando) return;
+
     if (itensSelecionados.length === 0) {
-      Alert.alert("Atenção", "Selecione pelo menos um produto.");
+      aviso("Atenção", "Selecione pelo menos um produto.");
       return;
     }
 
@@ -422,65 +382,65 @@ export default function Vendas() {
     );
 
     if (itemSemEstoque) {
-      Alert.alert(
+      aviso(
         "Estoque insuficiente",
         `O produto "${itemSemEstoque.produto.nome}" tem apenas ${itemSemEstoque.produto.estoque} unidade(s).`,
       );
       return;
     }
-    const dataConvertida = converterDataParaTimestamp(dataVenda);
 
-    if (!dataConvertida) {
-      Alert.alert(
-        "Data inválida",
-        "Informe uma data válida no formato DD/MM/AAAA.",
-      );
+    const agora = new Date();
+    const fimDeHoje = new Date(
+      agora.getFullYear(),
+      agora.getMonth(),
+      agora.getDate(),
+      23,
+      59,
+      59,
+    );
+
+    if (dataVenda > fimDeHoje) {
+      aviso("Atenção", "A data da venda não pode ser futura.");
       return;
     }
 
-    try {
-      const itens = itensSelecionados.map((item) => ({
-        produto_id: item.produto.id,
-        quantidade: item.quantidade,
-      }));
+    // dia escolhido + hora atual (o histórico usa a hora no gráfico)
+    const dataComHora = new Date(
+      dataVenda.getFullYear(),
+      dataVenda.getMonth(),
+      dataVenda.getDate(),
+      agora.getHours(),
+      agora.getMinutes(),
+      agora.getSeconds(),
+    );
 
-      const { data, error } = await supabase.rpc("registrar_venda", {
-        p_itens: itens,
+    try {
+      setSalvando(true);
+
+      const { error } = await supabase.rpc("registrar_venda", {
+        p_itens: itensSelecionados.map((item) => ({
+          produto_id: item.produto.id,
+          quantidade: item.quantidade,
+        })),
         p_forma_pagamento: formaPagamento,
-        p_data_venda: dataConvertida,
+        p_data_venda: dataComHora.toISOString(),
       });
 
-      if (error) {
-        console.log("ERRO AO REGISTRAR VENDA:", error);
+      if (error) throw error;
 
-        Alert.alert(
-          "Erro no cadastro",
-          `${error.message}\n${error.details || ""}\n${error.hint || ""}`,
-        );
+      aviso("Venda registrada!", `Total: ${formatarPreco(total)}`);
 
-        return;
-      }
-
-      Alert.alert(
-        "Venda registrada!",
-        `Venda registrada com sucesso.\nTotal: ${formatarPreco(total)}`,
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              setQuantidades({});
-              carregarProdutos();
-            },
-          },
-        ],
-      );
-    } catch (error) {
-      Alert.alert(
+      setQuantidades({});
+      setBuscaProduto("");
+      setDataVenda(new Date());
+      await carregarProdutos(true);
+    } catch (erro) {
+      aviso(
         "Erro ao registrar venda",
-        error instanceof Error
-          ? error.message
-          : "Não foi possível registrar a venda.",
+        mensagemDoErro(erro, "Não foi possível registrar a venda."),
       );
+    } finally {
+      setSalvando(false);
     }
   }
 
@@ -520,7 +480,7 @@ export default function Vendas() {
         )}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.lista}
-        nestedScrollEnabled
+        keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           <Text style={styles.vazio}>Nenhum produto encontrado.</Text>
         }
@@ -556,17 +516,7 @@ export default function Vendas() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.labelPagamento}>Data da venda</Text>
-
-        <TextInput
-          style={styles.campoBusca}
-          placeholder="DD/MM/AAAA"
-          placeholderTextColor="#9CA3AF"
-          value={dataVenda}
-          onChangeText={(valor) => setDataVenda(formatarDataDigitada(valor))}
-          keyboardType="numeric"
-          maxLength={10}
-        />
+        <DataVenda value={dataVenda} onChange={setDataVenda} />
 
         <Text style={styles.labelPagamento}>Forma de pagamento</Text>
 
@@ -602,13 +552,21 @@ export default function Vendas() {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.botaoRegistrar} onPress={revisarVenda}>
-          <Text style={styles.textoBotao}>Registrar venda</Text>
+        <TouchableOpacity
+          style={[styles.botaoRegistrar, salvando && { opacity: 0.6 }]}
+          onPress={registrarVenda}
+          disabled={salvando}
+        >
+          <Text style={styles.textoBotao}>
+            {salvando ? "Registrando..." : "Registrar venda"}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.botaoVoltar}
-          onPress={() => router.back()}
+          onPress={() =>
+            router.canGoBack() ? router.back() : router.replace("/dashboard")
+          }
         >
           <Text style={styles.textoVoltar}>Voltar</Text>
         </TouchableOpacity>

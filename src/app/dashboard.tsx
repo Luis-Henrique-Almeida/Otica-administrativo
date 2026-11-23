@@ -1,5 +1,5 @@
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -27,10 +27,11 @@ export default function Dashboard() {
   const [ticketMedio, setTicketMedio] = useState(0);
   const [carregando, setCarregando] = useState(true);
 
-  useEffect(() => {
-    carregarDashboard();
-  }, []);
-
+  useFocusEffect(
+    useCallback(() => {
+      carregarDashboard();
+    }, []),
+  );
   async function carregarDashboard() {
     try {
       const { data: usuarioData, error: usuarioErro } =

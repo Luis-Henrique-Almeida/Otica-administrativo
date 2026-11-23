@@ -34,6 +34,20 @@ export default function RootLayout() {
           headerLeft: () => <BotaoVoltar destino="/dashboard" />,
         }}
       />
+      <Stack.Screen
+        name="historico-vendas"
+        options={{
+          title: "Histórico de vendas",
+          headerLeft: () => <BotaoVoltar destino="/dashboard" />,
+        }}
+      />
+      <Stack.Screen
+        name="editar-venda"
+        options={{
+          title: "Editar venda",
+          headerLeft: () => <BotaoVoltar destino="/historico-vendas" />,
+        }}
+      />
     </Stack>
   );
 }
