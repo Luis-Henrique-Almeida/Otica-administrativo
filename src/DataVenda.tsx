@@ -1,30 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
-import {
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const MESES = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ];
 
-function diasNoMes(ano: number, mes: number) {
-  return new Date(ano, mes + 1, 0).getDate();
+const DIAS_SEMANA = ["D", "S", "T", "Q", "Q", "S", "S"];
+
+function mesmoDia(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
 }
 
 type Props = {
@@ -33,119 +23,234 @@ type Props = {
 };
 
 export function DataVenda({ value, onChange }: Props) {
-  const ano = value.getFullYear();
-  const mes = value.getMonth();
+  const [aberto, setAberto] = useState(false);
+  const [mesExibido, setMesExibido] = useState(
+    new Date(value.getFullYear(), value.getMonth(), 1),
+  );
 
-  const [diaTexto, setDiaTexto] = useState(String(value.getDate()));
+  const hoje = new Date();
+  const hojeInicio = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
 
-  useEffect(() => {
-    setDiaTexto(String(value.getDate()));
-  }, [value]);
+  const ano = mesExibido.getFullYear();
+  const mes = mesExibido.getMonth();
 
-  function alterarDia(texto: string) {
-    const limpo = texto.replace(/[^0-9]/g, "").slice(0, 2);
-    setDiaTexto(limpo);
+  const primeiroDiaSemana = new Date(ano, mes, 1).getDay();
+  const totalDias = new Date(ano, mes + 1, 0).getDate();
 
-    const numero = Number(limpo);
-    if (limpo && numero >= 1 && numero <= diasNoMes(ano, mes)) {
-      onChange(new Date(ano, mes, numero));
-    }
+  const celulas: (number | null)[] = [];
+  for (let i = 0; i < primeiroDiaSemana; i++) celulas.push(null);
+  for (let d = 1; d <= totalDias; d++) celulas.push(d);
+  while (celulas.length % 7 !== 0) celulas.push(null);
+
+  const semanas: (number | null)[][] = [];
+  for (let i = 0; i < celulas.length; i += 7) {
+    semanas.push(celulas.slice(i, i + 7));
   }
 
-  function aoSairDoCampo() {
-    // se ficou vazio ou inválido, volta para o último dia válido
-    setDiaTexto(String(value.getDate()));
+  const podeAvancar =
+    ano < hoje.getFullYear() ||
+    (ano === hoje.getFullYear() && mes < hoje.getMonth());
+
+  function alternar() {
+    if (!aberto) {
+      setMesExibido(new Date(value.getFullYear(), value.getMonth(), 1));
+    }
+    setAberto(!aberto);
   }
 
   function mudarMes(delta: number) {
-    const primeiroDia = new Date(ano, mes + delta, 1);
-    const maxDia = diasNoMes(primeiroDia.getFullYear(), primeiroDia.getMonth());
-    const dia = Math.min(value.getDate(), maxDia);
-    onChange(new Date(primeiroDia.getFullYear(), primeiroDia.getMonth(), dia));
+    setMesExibido(new Date(ano, mes + delta, 1));
   }
+
+  function selecionar(dia: number) {
+    onChange(new Date(ano, mes, dia));
+    setAberto(false);
+  }
+
+  function irParaHoje() {
+    onChange(new Date());
+    setAberto(false);
+  }
+
+  const textoData = `${value.getDate()} de ${MESES[value.getMonth()].toLowerCase()} de ${value.getFullYear()}${
+    mesmoDia(value, hoje) ? " (hoje)" : ""
+  }`;
 
   return (
     <View style={styles.container}>
       <Text style={styles.label}>Data da venda</Text>
 
-      <View style={styles.linha}>
-        <TextInput
-          style={styles.inputDia}
-          value={diaTexto}
-          onChangeText={alterarDia}
-          onBlur={aoSairDoCampo}
-          keyboardType="number-pad"
-          maxLength={2}
-          selectTextOnFocus
+      <TouchableOpacity
+        style={[styles.campo, aberto && styles.campoAberto]}
+        onPress={alternar}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="calendar-outline" size={20} color="#2563EB" />
+        <Text style={styles.textoCampo}>{textoData}</Text>
+        <Ionicons
+          name={aberto ? "chevron-up" : "chevron-down"}
+          size={18}
+          color="#64748B"
         />
+      </TouchableOpacity>
 
-        <View style={styles.mesAno}>
-          <TouchableOpacity
-            onPress={() => mudarMes(-1)}
-            style={styles.seta}
-            hitSlop={8}
-          >
-            <Ionicons name="chevron-back" size={20} color="#111827" />
-          </TouchableOpacity>
+      {aberto && (
+        <View style={styles.calendario}>
+          <View style={styles.cabecalhoMes}>
+            <TouchableOpacity
+              onPress={() => mudarMes(-1)}
+              style={styles.seta}
+              hitSlop={8}
+            >
+              <Ionicons name="chevron-back" size={22} color="#0F172A" />
+            </TouchableOpacity>
 
-          <Text style={styles.textoMes}>
-            {MESES[mes]} de {ano}
-          </Text>
+            <Text style={styles.tituloMes}>
+              {MESES[mes]} {ano}
+            </Text>
 
-          <TouchableOpacity
-            onPress={() => mudarMes(1)}
-            style={styles.seta}
-            hitSlop={8}
-          >
-            <Ionicons name="chevron-forward" size={20} color="#111827" />
+            <TouchableOpacity
+              onPress={() => mudarMes(1)}
+              style={[styles.seta, !podeAvancar && styles.setaDesativada]}
+              disabled={!podeAvancar}
+              hitSlop={8}
+            >
+              <Ionicons name="chevron-forward" size={22} color="#0F172A" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.linhaSemana}>
+            {DIAS_SEMANA.map((letra, i) => (
+              <View key={i} style={styles.celula}>
+                <Text style={styles.diaSemana}>{letra}</Text>
+              </View>
+            ))}
+          </View>
+
+          {semanas.map((semana, i) => (
+            <View key={i} style={styles.linhaSemana}>
+              {semana.map((dia, j) => {
+                if (dia === null) {
+                  return <View key={j} style={styles.celula} />;
+                }
+
+                const data = new Date(ano, mes, dia);
+                const futuro = data > hojeInicio;
+                const selecionado = mesmoDia(data, value);
+                const ehHoje = mesmoDia(data, hoje);
+
+                return (
+                  <View key={j} style={styles.celula}>
+                    <TouchableOpacity
+                      style={[
+                        styles.dia,
+                        ehHoje && styles.diaHoje,
+                        selecionado && styles.diaSelecionado,
+                      ]}
+                      onPress={() => selecionar(dia)}
+                      disabled={futuro}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[
+                          styles.textoDia,
+                          futuro && styles.textoDiaFuturo,
+                          selecionado && styles.textoDiaSelecionado,
+                        ]}
+                      >
+                        {dia}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+            </View>
+          ))}
+
+          <TouchableOpacity style={styles.botaoHoje} onPress={irParaHoje}>
+            <Text style={styles.textoHoje}>Ir para hoje</Text>
           </TouchableOpacity>
         </View>
-
-        <TouchableOpacity
-          onPress={() => onChange(new Date())}
-          style={styles.botaoHoje}
-        >
-          <Text style={styles.textoHoje}>Hoje</Text>
-        </TouchableOpacity>
-      </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { marginBottom: 16 },
-  label: { fontSize: 14, fontWeight: "600", color: "#0F172A", marginBottom: 8 },
-  linha: {
+  label: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#0F172A",
+    marginBottom: 10,
+  },
+  campo: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    flexWrap: "wrap",
-  },
-  inputDia: {
-    width: 56,
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#CBD5E1",
-    borderRadius: 8,
-    paddingVertical: 10,
-    fontSize: 18,
-    fontWeight: "700",
-    textAlign: "center",
-    color: "#0F172A",
-    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
   },
-  mesAno: {
+  campoAberto: { borderColor: "#2563EB" },
+  textoCampo: { flex: 1, fontSize: 15, color: "#0F172A" },
+
+  calendario: {
+    marginTop: 8,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 14,
+    padding: 12,
+  },
+  cabecalhoMes: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F1F5F9",
-    borderRadius: 8,
+    justifyContent: "space-between",
+    marginBottom: 8,
   },
-  seta: { padding: 10 },
-  textoMes: { fontSize: 15, color: "#0F172A", fontWeight: "500" },
+  tituloMes: { fontSize: 16, fontWeight: "700", color: "#0F172A" },
+  seta: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F1F5F9",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  setaDesativada: { opacity: 0.3 },
+
+  linhaSemana: { flexDirection: "row" },
+  celula: {
+    width: `${100 / 7}%`,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  diaSemana: { fontSize: 12, fontWeight: "600", color: "#94A3B8" },
+  dia: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  diaHoje: { borderWidth: 1, borderColor: "#2563EB" },
+  diaSelecionado: { backgroundColor: "#2563EB", borderColor: "#2563EB" },
+  textoDia: { fontSize: 14, color: "#0F172A" },
+  textoDiaFuturo: { color: "#CBD5E1" },
+  textoDiaSelecionado: { color: "#FFFFFF", fontWeight: "700" },
+
   botaoHoje: {
-    backgroundColor: "#DBEAFE",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    alignSelf: "center",
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 8,
+    backgroundColor: "#DBEAFE",
   },
   textoHoje: { color: "#1D4ED8", fontWeight: "600" },
 });
