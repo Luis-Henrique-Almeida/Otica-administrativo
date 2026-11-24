@@ -153,6 +153,12 @@ export default function Dashboard() {
 
     router.replace("/");
   }
+  function formatarPreco(valor: number) {
+    return valor.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  }
 
   if (carregando) {
     return (
@@ -181,22 +187,70 @@ export default function Dashboard() {
       <Text style={styles.welcome}>Olá, {nome}!</Text>
       <Text style={styles.description}>Confira o resumo da sua ótica.</Text>
 
-      <View style={styles.grid}>
-        <View style={styles.card}>
+      <Text style={styles.tituloSecao}>Vendas</Text>
+
+      <View style={styles.linhaCards}>
+        <View style={[styles.card, styles.cardMetade]}>
+          <Text style={styles.cardLabel}>Vendas hoje</Text>
+          <Text style={styles.cardValue}>{vendasHoje}</Text>
+        </View>
+
+        <View style={[styles.card, styles.cardMetade]}>
+          <Text style={styles.cardLabel}>Faturamento hoje</Text>
+          <Text style={styles.cardValue} numberOfLines={1} adjustsFontSizeToFit>
+            {formatarPreco(faturamentoHoje)}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.linhaCards}>
+        <View style={[styles.card, styles.cardMetade]}>
+          <Text style={styles.cardLabel}>Faturamento do mês</Text>
+          <Text style={styles.cardValue} numberOfLines={1} adjustsFontSizeToFit>
+            {formatarPreco(faturamentoMes)}
+          </Text>
+        </View>
+
+        <View style={[styles.card, styles.cardMetade]}>
+          <Text style={styles.cardLabel}>Ticket médio</Text>
+          <Text style={styles.cardValue} numberOfLines={1} adjustsFontSizeToFit>
+            {formatarPreco(ticketMedio)}
+          </Text>
+        </View>
+      </View>
+
+      <Text style={styles.tituloSecao}>Estoque</Text>
+
+      <View style={styles.linhaCards}>
+        <View style={[styles.card, styles.cardMetade]}>
           <Text style={styles.cardLabel}>Produtos ativos</Text>
           <Text style={styles.cardValue}>{totalProdutos}</Text>
         </View>
 
-        <View style={styles.card}>
+        <View
+          style={[
+            styles.card,
+            styles.cardMetade,
+            estoqueBaixo > 0 && styles.cardAlertaAmarelo,
+          ]}
+        >
           <Text style={styles.cardLabel}>Estoque baixo</Text>
           <Text style={styles.cardValue}>{estoqueBaixo}</Text>
-          <Text style={styles.cardHint}>No limite definido</Text>
         </View>
+      </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Produtos esgotados</Text>
+      <View style={styles.linhaCards}>
+        <View
+          style={[
+            styles.card,
+            styles.cardMetade,
+            produtosEsgotados > 0 && styles.cardAlertaVermelho,
+          ]}
+        >
+          <Text style={styles.cardLabel}>Esgotados</Text>
           <Text style={styles.cardValue}>{produtosEsgotados}</Text>
         </View>
+        <View style={styles.cardMetade} />
       </View>
 
       <TouchableOpacity
@@ -353,5 +407,30 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
+  },
+  tituloSecao: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#6b7280",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  linhaCards: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 12,
+  },
+  cardMetade: {
+    flex: 1,
+  },
+  cardAlertaAmarelo: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#F59E0B",
+  },
+  cardAlertaVermelho: {
+    borderLeftWidth: 4,
+    borderLeftColor: "#DC2626",
   },
 });
